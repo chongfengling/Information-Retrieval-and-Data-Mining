@@ -113,6 +113,17 @@ def Zipf_func(s, N):
     y_values = x_values ** (-s) / np.sum(x_values ** (-s))
     return y_values
 
+def plot_distributions(x_axis, y_empircal, y_zipf, loglog=True, title='Untitled'):
+    if loglog:
+        plt.loglog(x_axis, y_empircal, label='prob', linestyle='dotted')
+        plt.loglog(x_axis, y_zipf, label='zipf')
+    else:
+        plt.plot(x_axis, y_empircal, label='prob', linestyle='dotted')
+        plt.plot(x_axis, y_zipf, label='zipf')
+    plt.legend()
+    plt.title(title)
+    plt.show()
+
 def ex_1(astr):
     # Experiemnt 1: keep stop words
     terms = text_preprocess(astr, remove=False)
@@ -125,11 +136,7 @@ def ex_1(astr):
     x_axis = np.linspace(1, size_of_terms, size_of_terms)
     normalized_prob = frequency_normalization(terms_frequency)
     zipf = Zipf_func(1, size_of_terms)
-    plt.loglog(x_axis, normalized_prob, label='prob', linestyle='dotted')
-    plt.loglog(x_axis, zipf, label='zipf')
-    plt.legend()
-    plt.title('Keep stop words')
-    plt.show()
+    plot_distributions(x_axis, y_empircal=normalized_prob, y_zipf=zipf, title='Keep stop words')
 
 def ex_2(astr):
     # Experiment 2: remove stop words
@@ -143,11 +150,7 @@ def ex_2(astr):
     x_axis = np.linspace(1, size_of_terms, size_of_terms)
     normalized_prob = frequency_normalization(terms_frequency)
     zipf = Zipf_func(1, size_of_terms)
-    plt.loglog(x_axis, normalized_prob, label='prob', linestyle='dotted')
-    plt.loglog(x_axis, zipf, label='zipf')
-    plt.legend()
-    plt.title('Remove stop words')
-    plt.show()
+    plot_distributions(x_axis, y_empircal=normalized_prob, y_zipf=zipf, title='remove stop words')
 
 if __name__=='__main__':
     # reading data from the file and convert it to string
