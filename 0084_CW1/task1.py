@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
 
@@ -44,7 +43,7 @@ def remove_stop_words(aset, stop_words=[]):
         aset.discard(word)
     return aset
 
-def text_preprocess(astr, remove=False):
+def text_preprocess(astr, remove=False, save_txt = False):
     """text preprocess
 
     Parameters
@@ -61,8 +60,11 @@ def text_preprocess(astr, remove=False):
     """
     unique_words = tokenisation(astr)
     if remove:
+        unique_words_removed = remove_stop_words(unique_words)
+        if save_txt: np.savetxt('terms_removed.txt', np.array(list(unique_words_removed)), delimiter='\n', fmt="%s")
         return remove_stop_words(unique_words)
     else:
+        if save_txt: np.savetxt('terms_kept.txt', np.array(list(unique_words)), delimiter='\n', fmt="%s")
         return unique_words
 
 def occurrence_counter(astr, terms=None):
@@ -126,7 +128,7 @@ def plot_distributions(x_axis, y_empircal, y_zipf, loglog=True, title='Untitled'
 
 def ex_1(astr):
     # Experiemnt 1: keep stop words
-    terms = text_preprocess(astr, remove=False)
+    terms = text_preprocess(astr, remove=False, save_txt=True)
     size_of_terms = len(terms)
     print(f'Size of the terms (keep stop words): {size_of_terms}')
 
@@ -140,7 +142,7 @@ def ex_1(astr):
 
 def ex_2(astr):
     # Experiment 2: remove stop words
-    terms = text_preprocess(astr, remove=True)
+    terms = text_preprocess(astr, remove=True, save_txt=True)
     size_of_terms = len(terms)
     print(f'Size of the terms (remove stop words): {size_of_terms}')
 
