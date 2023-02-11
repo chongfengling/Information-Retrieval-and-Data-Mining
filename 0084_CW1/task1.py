@@ -66,7 +66,20 @@ def text_preprocess(astr, remove=False):
         return unique_words
 
 def occurrence_counter(astr, terms=None):
+    """counter the occurrence frequency of terms in the astr
 
+    Parameters
+    ----------
+    astr : string
+        _description_
+    terms : set, optional
+        occurrence frequency of termm should be kept, by default None
+
+    Returns
+    -------
+    Counter
+        _description_
+    """
     tokens = astr.split()
     tokens_frequency = Counter(tokens)
     if terms:
@@ -78,7 +91,7 @@ def occurrence_counter(astr, terms=None):
     return tokens_frequency
 
 def frequency_normalization(counter: Counter):
-    """normalised frequency
+    """normalised ranked frequency
 
     Parameters
     ----------
@@ -87,8 +100,8 @@ def frequency_normalization(counter: Counter):
 
     Returns
     -------
-    _type_
-        _description_
+    list
+        ranked occurrence probability
     """
     ranked_counter = sorted(counter.items(), key=lambda i: i[1], reverse=True)
     values = [tmp[1] for tmp in ranked_counter]
