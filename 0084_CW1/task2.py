@@ -50,7 +50,7 @@ def II_simple(terms, document):
     return II_simple_dict
 
 def II_counts(terms, document):
-    """simple inverted index
+    """inverted index with counts
 
     Parameters
     ----------
@@ -74,14 +74,38 @@ def II_counts(terms, document):
                 II_counts_dict[word].append([(qid, pid), counts])
     return II_counts_dict
 
-def II_positions():
-    pass
+def II_positions(terms, document):
+    """inverted index with positions
+
+    Parameters
+    ----------
+    terms : list
+        _description_
+    document : pd.Dataframe
+        _description_
+
+    Returns
+    -------
+    dict
+        _description_
+    """
+    II_positions_dict = {key: [] for key in terms}
+    for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_positions'):
+        passage_list = passage.split()
+        passage_set = set(passage.split())
+        for word in passage_set:
+            if word in II_positions_dict.keys():
+                positions = [index for index, tmp in enumerate(passage_list) if tmp == word]
+                II_positions_dict[word].append([(qid, pid), positions])
+    return II_positions_dict
 
 if __name__=='__main__':
     document = load_document()
     terms = load_terms()
     # res = II_simple(terms=terms, document=document)
     # print(res)
-    res = II_counts(terms=terms, document=document)
+    # res = II_counts(terms=terms, document=document)
+
+    res = II_positions(terms=terms, document=document)
     
     pass
