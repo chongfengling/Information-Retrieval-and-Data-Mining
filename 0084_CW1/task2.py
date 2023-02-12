@@ -64,15 +64,15 @@ def II_counts(terms, document):
     dict
         (key, value) = (term, [(qid, pid), ..., ])
     """
-    II_simple_dict = {key: [] for key in terms}
-    for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_simple'):
+    II_counts_dict = {key: [] for key in terms}
+    for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_counts'):
         passage_list = passage.split()
         passage_set = set(passage.split())
         for word in passage_set:
-            if word in II_simple_dict.keys():
+            if word in II_counts_dict.keys():
                 counts = passage_list.count(word)
-                II_simple_dict[word].append([(qid, pid), counts])
-    return II_simple_dict
+                II_counts_dict[word].append([(qid, pid), counts])
+    return II_counts_dict
 
 def II_positions():
     pass
