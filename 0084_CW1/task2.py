@@ -49,6 +49,29 @@ def II_simple(terms, document):
                 II_simple_dict[word].append((qid, pid))
     return II_simple_dict
 
+def II_counts(terms, document):
+    """_summary_
+
+    Parameters
+    ----------
+    terms : list
+        _description_
+    document : pd.Dataframe
+        _description_
+    """
+
+    II_simple_dict = II_simple(terms=terms, document=document)
+    II_counts_dict = {key: [] for key in terms}
+    for key, value in tqdm(II_simple_dict.items(), desc='II_counts'):
+        for (qid, pid) in value:
+            # get the passage (string) by qid and pid
+            passage = document.loc[(document['qid'] == qid) & (document['pid'] == pid)]['passage'].values[0]
+            # split the string to a list by space
+            passage = passage.split()
+            # get the counts in the passage
+            counts = passage.count(key)
+            II_counts_dict[key].append([(qid, pid), counts])
+    return II_counts_dict
 if __name__=='__main__':
     document = load_document()
     terms = load_terms()
