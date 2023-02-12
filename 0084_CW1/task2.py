@@ -63,15 +63,13 @@ def II_counts(terms, document):
     II_simple_dict = II_simple(terms=terms, document=document)
     II_counts_dict = {key: [] for key in terms}
     for key, value in tqdm(II_simple_dict.items(), desc='II_counts'):
-        for (qid, pid) in value:
-            # get the passage (string) by qid and pid
-            passage = document.loc[(document['qid'] == qid) & (document['pid'] == pid)]['passage'].values[0]
-            # split the string to a list by space
-            passage = passage.split()
-            # get the counts in the passage
-            counts = passage.count(key)
-            II_counts_dict[key].append([(qid, pid), counts])
+        passages = document.loc[document['qid'].isin([qid for (qid, pid) in value]) & document['pid'].isin([pid for (qid, pid) in value])]['passage'].values
+        passages = [passage.split() for passage in passages]
+        counts = [passage.count(key) for passage in passages]
+        II_counts_dict[key] = [[(qid, pid), count] for ((qid, pid), count) in zip(value, counts)]
+        pass
     return II_counts_dict
+
 if __name__=='__main__':
     document = load_document()
     terms = load_terms()
