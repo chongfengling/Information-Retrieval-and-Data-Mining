@@ -42,9 +42,9 @@ def II_simple(terms, document):
         (key, value) = (term, [(qid, pid), ..., ])
     """
     II_simple_dict = {key: [] for key in terms}
-    for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage'])):
-        passage_list = set(passage.split())
-        for word in passage_list:
+    for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_simple'):
+        passage_set = set(passage.split())
+        for word in passage_set:
             if word in II_simple_dict.keys():
                 II_simple_dict[word].append((qid, pid))
     return II_simple_dict
