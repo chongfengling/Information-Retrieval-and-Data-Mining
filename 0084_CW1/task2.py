@@ -9,12 +9,38 @@ def load_document(file_path='0084_CW1/candidate-passages-top1000.tsv'):
     return df
 
 def load_terms(file_path='0084_CW1/terms_kept.txt'):
+    """load terms generated in the task 1
+
+    Parameters
+    ----------
+    file_path : str, file path
+        _description_, by default '0084_CW1/terms_kept.txt'
+
+    Returns
+    -------
+    list
+        each elements is a term (string type)
+    """
     with open(file_path, 'r') as f:
         lines = f.readlines()
     terms = [line.strip() for line in lines]
     return terms
 
 def II_simple(terms, document):
+    """simple inverted index
+
+    Parameters
+    ----------
+    terms : list
+        loaded terms
+    document : pd.DataFrame
+        candidate files, header = ['qid', 'pid', 'query', 'passage']
+
+    Returns
+    -------
+    dict
+        (key, value) = (term, [(qid, pid), ..., ])
+    """
     II_simple_dict = {key: [] for key in terms}
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage'])):
         passage_list = set(passage.split())
