@@ -50,29 +50,38 @@ def II_simple(terms, document):
     return II_simple_dict
 
 def II_counts(terms, document):
-    """_summary_
+    """simple inverted index
 
     Parameters
     ----------
     terms : list
-        _description_
-    document : pd.Dataframe
-        _description_
-    """
+        loaded terms
+    document : pd.DataFrame
+        candidate files, header = ['qid', 'pid', 'query', 'passage']
 
-    II_simple_dict = II_simple(terms=terms, document=document)
-    II_counts_dict = {key: [] for key in terms}
-    for key, value in tqdm(II_simple_dict.items(), desc='II_counts'):
-        passages = document.loc[document['qid'].isin([qid for (qid, pid) in value]) & document['pid'].isin([pid for (qid, pid) in value])]['passage'].values
-        passages = [passage.split() for passage in passages]
-        counts = [passage.count(key) for passage in passages]
-        II_counts_dict[key] = [[(qid, pid), count] for ((qid, pid), count) in zip(value, counts)]
-        pass
-    return II_counts_dict
+    Returns
+    -------
+    dict
+        (key, value) = (term, [(qid, pid), ..., ])
+    """
+    II_simple_dict = {key: [] for key in terms}
+    for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_simple'):
+        passage_list = passage.split()
+        passage_set = set(passage.split())
+        for word in passage_set:
+            if word in II_simple_dict.keys():
+                counts = passage_list.count(word)
+                II_simple_dict[word].append([(qid, pid), counts])
+    return II_simple_dict
+
+def II_positions():
+    pass
 
 if __name__=='__main__':
     document = load_document()
     terms = load_terms()
-    res = II_simple(terms=terms, document=document)
-    print(res)
+    # res = II_simple(terms=terms, document=document)
+    # print(res)
+    res = II_counts(terms=terms, document=document)
+    
     pass
