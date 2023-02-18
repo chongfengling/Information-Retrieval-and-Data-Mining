@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
+import nltk
 
 # text processing methods
 def tokenisation(astr):
@@ -38,7 +39,9 @@ def remove_stop_words(aset, stop_words=[]):
     if stop_words:
         pass
     else:
-        stop_words = ['the', 'an', 'a', 'to', 'so', 'then', 'of', 'and', 'is', 'in', 'for', 'or', 'that', 'are', 'The', 'on']
+        nltk.download('stopwords')
+        stop_words = nltk.corpus.stopwords.words('english')
+        # stop_words = ['the', 'an', 'a', 'to', 'so', 'then', 'of', 'and', 'is', 'in', 'for', 'or', 'that', 'are', 'The', 'on']
     for word in stop_words:
         aset.discard(word)
     return aset
@@ -75,7 +78,7 @@ def occurrence_counter(astr, terms=None):
     astr : string
         _description_
     terms : set, optional
-        occurrence frequency of termm should be kept, by default None
+        occurrence frequency of terms should be kept, by default None
 
     Returns
     -------
