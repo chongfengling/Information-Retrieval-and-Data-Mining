@@ -2,10 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 import nltk
+import re
 
 # text processing methods
 def tokenisation(astr):
-    """return the terms in a string
+    """use nltk to
+    1. lower the character
+    2. substitute all non-alphanumeric characters (excluding whitespace)
+    3. Return a tokenized (English) copy of *text* using NLTK's recommended word tokenizer
 
     Parameters
     ----------
@@ -14,12 +18,14 @@ def tokenisation(astr):
 
     Returns
     -------
-    set
-        _description_
+    list
+        tokens
     """
-    tokens = astr.split()
-    unique_words = set(tokens)
-    return unique_words
+    astr_lower = astr.lower()
+    astr_lower_nonalpha = re.sub(r'[^a-z0-9\s]', ' ', astr_lower)
+    nltk.download('punkt')
+    tokens_list = nltk.word_tokenize(astr_lower_nonalpha)
+    return tokens_list
 
 def remove_stop_words(aset, stop_words=[]):
     """remove stop words in the set aset
@@ -59,9 +65,10 @@ def text_preprocess(astr, remove=False, save_txt = False):
     Returns
     -------
     set
-        _description_
+        unique terms for a string astr
     """
-    unique_words = tokenisation(astr)
+    tokens_list = tokenisation(astr)
+    unique_words = set(tokens_list)
     if remove:
         unique_words_removed = remove_stop_words(unique_words)
         if save_txt: np.savetxt('terms_removed.txt', np.array(list(unique_words_removed)), delimiter='\n', fmt="%s")
@@ -85,10 +92,10 @@ def occurrence_counter(astr, kept_terms=None):
     Counter
         _description_
     """
-    tokens = astr.split()
-    tokens_frequency = Counter(tokens)
+    tokens_list = tokenisation(astr)
+    tokens_frequency = Counter(tokens_list)
     if kept_terms:
-        tokens_set = set(tokens)
+        tokens_set = set(tokens_list)
         removed_terms = tokens_set - kept_terms
         for removed_term in removed_terms:
             del tokens_frequency[removed_term]
