@@ -71,10 +71,10 @@ def text_preprocess(astr, remove=False, save_txt = False):
     unique_words = set(tokens_list)
     if remove:
         unique_words_removed = remove_stop_words(unique_words)
-        if save_txt: np.savetxt('terms_removed.txt', np.array(list(unique_words_removed)), delimiter='\n', fmt="%s")
-        return remove_stop_words(unique_words)
+        if save_txt: np.savetxt('0084_CW1/terms_removed.txt', np.array(list(unique_words_removed)), delimiter='\n', fmt="%s")
+        return unique_words_removed
     else:
-        if save_txt: np.savetxt('terms_kept.txt', np.array(list(unique_words)), delimiter='\n', fmt="%s")
+        if save_txt: np.savetxt('0084_CW1/terms_kept.txt', np.array(list(unique_words)), delimiter='\n', fmt="%s")
         return unique_words
 
 def occurrence_counter(astr, kept_terms=None):
@@ -115,8 +115,8 @@ def frequency_normalization(counter: Counter):
     list
         ranked occurrence probability
     """
-    ranked_counter = sorted(counter.items(), key=lambda i: i[1], reverse=True)
-    values = [tmp[1] for tmp in ranked_counter]
+    sorted_counter = sorted(counter.items(), key=lambda i: i[1], reverse=True)
+    values = [tmp[1] for tmp in sorted_counter]
     normalized_prob = values / np.linalg.norm(values, 1)
     return normalized_prob
 
