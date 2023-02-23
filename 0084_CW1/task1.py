@@ -70,14 +70,14 @@ def text_preprocess(astr, remove=False, save_txt = False):
         if save_txt: np.savetxt('terms_kept.txt', np.array(list(unique_words)), delimiter='\n', fmt="%s")
         return unique_words
 
-def occurrence_counter(astr, terms=None):
+def occurrence_counter(astr, kept_terms=None):
     """counter the occurrence frequency of terms in the astr
 
     Parameters
     ----------
     astr : string
         _description_
-    terms : set, optional
+    kept_terms : set, optional
         occurrence frequency of terms should be kept, by default None
 
     Returns
@@ -87,9 +87,9 @@ def occurrence_counter(astr, terms=None):
     """
     tokens = astr.split()
     tokens_frequency = Counter(tokens)
-    if terms:
+    if kept_terms:
         tokens_set = set(tokens)
-        removed_terms = tokens_set - terms
+        removed_terms = tokens_set - kept_terms
         for removed_term in removed_terms:
             del tokens_frequency[removed_term]
 
@@ -149,8 +149,8 @@ def ex_2(astr):
     size_of_terms = len(terms)
     print(f'Size of the terms (remove stop words): {size_of_terms}')
 
-    terms_frequency = occurrence_counter(astr, terms=terms)
-    print(f'Top 10 terms with the highest occurrences: {terms_frequency.most_common(10)}')
+    terms_frequency = occurrence_counter(astr, kept_terms=terms)
+    print(f'Top 10 terms with the highest occurrences: {terms_frequency.most_common(10)}') # Top 10 terms with the highest occurrences: [('1', 43992), ('2', 33919), ('one', 27300), ('name', 25163), ('3', 22602), ('also', 21757), ('number', 21367), ('may', 20556), ('cost', 17128), ('used', 16542)]
 
     x_axis = np.linspace(1, size_of_terms, size_of_terms)
     normalized_prob = frequency_normalization(terms_frequency)
