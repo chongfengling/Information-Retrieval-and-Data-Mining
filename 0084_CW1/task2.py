@@ -63,7 +63,7 @@ def II_counts(terms, document):
     Returns
     -------
     dict
-        (key, value) = (term, [(qid, pid), ..., ])
+        (key, value) = (term, [[(qid, pid), count], [(qid, pid), count], ...])
     """
     II_counts_dict = {key: [] for key in terms}
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_counts'):
