@@ -5,8 +5,8 @@ from collections import Counter
 from tqdm import tqdm
 from task1 import tokenisation
 
-def load_document(file_path='0084_CW1/candidate-passages-top1000.tsv'):
-    df = pd.read_csv(file_path, sep='\t', names=['qid', 'pid', 'query', 'passage'])
+def load_document(file_path='0084_CW1/candidate-passages-top1000.tsv', names=['qid', 'pid', 'query', 'passage']):
+    df = pd.read_csv(file_path, sep='\t', names=names)
     return df
 
 def load_terms(file_path='0084_CW1/terms_kept.txt'):
@@ -68,7 +68,7 @@ def II_counts(terms, document):
     II_counts_dict = {key: [] for key in terms}
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_counts'):
         passage_list = tokenisation(passage)
-        passage_set = set(passage.split())
+        passage_set = set(passage_list)
         for word in passage_set:
             if word in II_counts_dict.keys():
                 counts = passage_list.count(word)
@@ -93,7 +93,7 @@ def II_positions(terms, document):
     II_positions_dict = {key: [] for key in terms}
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_positions'):
         passage_list = tokenisation(passage)
-        passage_set = set(passage.split())
+        passage_set = set(passage_list)
         for word in passage_set:
             if word in II_positions_dict.keys():
                 positions = [index for index, tmp in enumerate(passage_list) if tmp == word]
