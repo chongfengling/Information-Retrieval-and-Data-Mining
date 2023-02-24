@@ -32,3 +32,14 @@ def IDF(document: pd.DataFrame, terms: list):
     n_terms = np.asarray(n_terms) # temrs - n_terms, one to one
     IDF_ts = np.log10(N / n_terms)
     return IDF_ts
+
+def select_top_passages(df_raw:pd.DataFrame, save_raw:bool=True, save_top:bool=True):
+    # name the output files by current time
+    import datetime
+    now = datetime.datetime.now()
+    H_M = now.strftime('%H_%M')
+
+    df_top100 = df_raw.sort_values(by='score', ascending=False).groupby('qid').apply(lambda x: x.nlargest(100, columns='score')).reset_index(drop=True)
+
+    if save_raw: df_raw.to_csv(f'TFIDF_{H_M}.csv', header=False, index=False)
+    if save_top: df_top100.to_csv(f'TFIDF_TOP100_{H_M}.csv', header=False, index=False)
