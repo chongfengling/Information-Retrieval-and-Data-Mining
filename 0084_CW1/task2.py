@@ -66,6 +66,7 @@ def II_counts(terms, document):
         (key, value) = (term, [[(qid, pid), count], [(qid, pid), count], ...])
     """
     II_counts_dict = {key: [] for key in terms}
+    II_simple_list = []
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_counts'):
         passage_list = tokenisation(passage)
         passage_set = set(passage_list)
@@ -73,7 +74,11 @@ def II_counts(terms, document):
             if word in II_counts_dict.keys():
                 counts = passage_list.count(word)
                 II_counts_dict[word].append([(qid, pid), counts])
-    return II_counts_dict
+                II_simple_list.append([word, qid, pid, counts])
+    if returnList:
+        return II_simple_list
+    else:
+        return II_counts_dict
 
 def II_positions(terms, document):
     """inverted index with positions

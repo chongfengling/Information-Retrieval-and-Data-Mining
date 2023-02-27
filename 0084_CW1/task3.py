@@ -80,10 +80,10 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
             tmp.append([qid, pid, cosine_score])
     df_score = pd.DataFrame(tmp, columns=['qid', 'pid', 'score'], dtype=float).astype(
         dtype={'qid': int, 'pid': int, 'score': float})
-    select_top_passages(df_score, save_raw=save_raw, save_top=save_top)
+    select_top_passages(df_score, save_raw=save_raw, save_top=save_top, filename='TF_IDF')
 
 
-def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: bool = True):
+def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: bool = True, filename: str = 'None'):
     # name the output files by current time
     import datetime
     now = datetime.datetime.now()
@@ -93,12 +93,12 @@ def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: b
         'qid').apply(lambda x: x.nlargest(100, columns='score')).reset_index(drop=True)
 
     if save_raw:
-        df_raw.to_csv(f'TFIDF_{H_M}.csv', header=False, index=False)
+        df_raw.to_csv(f'{filename}_{H_M}.csv', header=False, index=False)
     if save_top:
-        df_top100.to_csv(f'TFIDF_TOP100_{H_M}.csv', header=False, index=False)
+        df_top100.to_csv(f'{filename}_TOP100_{H_M}.csv', header=False, index=False)
 
 
-def BM25_Score(Q, D, ri, R, ni, N, k1, k2, fi, qfi, K):
+def BM25_Score(document: pd.DataFrame, query: pd.DataFrame, terms: list, Q, D, ri, R, ni, N, k1, k2, fi, qfi, K):
     """calculate relative score of a query q and a document d in a document collection D based on BM25 model
     score = sum_(term i in q ) (log(((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5))) * (((k1 + 1) * fi ) / (K + fi)) * (((k2 + 1) * qfi) / (k2 + qfi)))
 
@@ -111,7 +111,7 @@ def BM25_Score(Q, D, ri, R, ni, N, k1, k2, fi, qfi, K):
     ri : _type_
         number of relevant documents that contain term i
     R : _type_
-        number of relevant document
+        number of relevant documents
     ni : _type_
         number of documents that contains term i
     N : _type_
@@ -128,6 +128,50 @@ def BM25_Score(Q, D, ri, R, ni, N, k1, k2, fi, qfi, K):
         empirical parameter
     """
     pass
+
+def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
+    # BIM score
+    # document term weight in d
+    # query term weight in q
+    N = len(document['pid'].unique()) # should be unique?
+    # avdl = np.average(document['passage'].apply(tokenisation).apply(len))
+    avdl = 58
+    # II_counts_dict = II_counts(terms=terms, document=document)
+    II_counts_df = pd.DataFrame(II_counts(terms=terms, document=document, returnList=True), columns=['terms','qid', 'pid','freq'])
+    tmp = [] # store the result
+    for (qid, q) in tqdm(zip(query['qid'], query['query']), desc="Computing BIM score"): # get query q. iterate the query one by one
+        q_list = tokenisation(q) # stopwords kept
+        qid_terms = set(q_list) # unique terms in a query
+        simplified_term = [term for term in qid_terms if term in terms] # remove the stopwords
+        R_passages = document.loc[document['qid'] == qid] # relative passages to the qid.
+        NR_passages = document.loc[document['qid'] != qid]
+        R = len(R_passages) # less than 1000. number of relevant documents
+        for (pid, passage) in tqdm(zip(R_passages['pid'], R_passages['passage']), desc='For each pid'): # get a single passage(document )d
+            BM25_qp = [] # BM25 score of a pair (query q, document d)
+            for term in simplified_term: # term i in query q, may or may not in a document(passage) d
+                # BIM score
+                df_i_occurs = II_counts_df[II_counts_df['terms'] == term] # all documents contains term i
+                ri = len(df_i_occurs.loc[df_i_occurs['qid'] == qid]) # the document related to the query
+                ni = len(df_i_occurs) # all documents contain term i
+                # BIM_tmp = ((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5))
+                BIM_score = np.log10(((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5)))
+                # document term weight in d
+                dl = len(passage)
+                K = K_value(k1=k1, b=b, dl=dl, avdl=avdl)
+                try:
+                    fi = df_i_occurs[df_i_occurs['pid'] == pid]['freq'].values[0]
+                except:
+                    fi=0
+                d_weight = (k1 + 1) * fi / (K + fi)
+                # query term weight in q
+                qfi = q_list.count(term)
+                q_weight = (k2 + 1) * qfi / (k2 + qfi)
+                # combine three parts
+                BM25_qp.append(BIM_score * d_weight * q_weight)
+            tmp.append([qid, pid, np.sum(BM25_qp)])
+    df_score = pd.DataFrame(tmp, columns=['qid', 'pid', 'BM25_score'], dtype=float).astype(
+        dtype={'qid': int, 'pid': int, 'BM25_score': float})
+    select_top_passages(df_score, filename='BM25')
 
 
 def K_value(k1, b, dl, avdl):
