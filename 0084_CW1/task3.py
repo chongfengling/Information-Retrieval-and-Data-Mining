@@ -76,7 +76,26 @@ def select_top_passages(df_raw:pd.DataFrame, save_raw:bool=True, save_top:bool=T
     now = datetime.datetime.now()
     H_M = now.strftime('%H_%M')
 
-    df_top100 = df_raw.sort_values(by='score', ascending=False).groupby('qid').apply(lambda x: x.nlargest(100, columns='score')).reset_index(drop=True)
+def K_value(k1, b, dl, avdl):
+    """consider the length of the document d,  K = k1 * ((1 - b) + b * dl / avdl)
+
+    Parameters
+    ----------
+    k1 : float
+        empirical parameter
+    b : float
+        empirical parameter
+    dl : float or np.array
+        length of the document d
+    avdl : float
+        average document length in the document collection D
+
+    Returns
+    -------
+    float or np.array, depends on the type of dl
+        K_value(s) for document(s) d
+    """
+    return k1 * ((1 - b) * b * (dl / avdl))
 
     if save_raw: df_raw.to_csv(f'TFIDF_{H_M}.csv', header=False, index=False)
     if save_top: df_top100.to_csv(f'TFIDF_TOP100_{H_M}.csv', header=False, index=False)
