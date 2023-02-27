@@ -98,6 +98,38 @@ def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: b
         df_top100.to_csv(f'TFIDF_TOP100_{H_M}.csv', header=False, index=False)
 
 
+def BM25_Score(Q, D, ri, R, ni, N, k1, k2, fi, qfi, K):
+    """calculate relative score of a query q and a document d in a document collection D based on BM25 model
+    score = sum_(term i in q ) (log(((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5))) * (((k1 + 1) * fi ) / (K + fi)) * (((k2 + 1) * qfi) / (k2 + qfi)))
+
+    Parameters
+    ----------
+    Q : _type_
+        a single query contains terms i
+    D : _type_
+        document collection D
+    ri : _type_
+        number of relevant documents that contain term i
+    R : _type_
+        number of relevant document
+    ni : _type_
+        number of documents that contains term i
+    N : _type_
+        number of documents in the document collection D
+    k1 : _type_
+        empirical parameter
+    k2 : _type_
+        empirical parameter
+    fi : _type_
+        frequency of term i in the document d
+    qfi : _type_
+        frequency of term i in the query q
+    K : _type_
+        empirical parameter
+    """
+    pass
+
+
 def K_value(k1, b, dl, avdl):
     """consider the length of the document d,  K = k1 * ((1 - b) + b * dl / avdl)
 
