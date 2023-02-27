@@ -37,7 +37,7 @@ def IDF(document: pd.DataFrame, terms: list):
 
 def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.array, save_raw: bool = True, save_top: bool = True):
     """TF_t,d = Term frequency of term t in document d
-    TF_t,d = 
+    cosine_score = cos (TF_IDF)
 
     Parameters
     ----------
@@ -57,18 +57,27 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
 
     # II_counts_dict = II_counts(terms=terms, document=document)
     tmp = []
+    # length of idf
+    IDF_ts_length = np.linalg.norm(IDF_ts)
     # df_score = pd.DataFrame(names=['qid', 'pid', 'score'])
-    for (qid, query) in tqdm(zip(query['qid'], query['query']), desc="Get TF-IDF for query"):
-        qid_terms = set(tokenisation(query))
-        passages = document.loc[document['qid'] == qid]
-        common_term = [term for term in qid_terms if term in terms]
+    for (qid, query) in tqdm(zip(query['qid'], query['query']), desc="Get TF-IDF for 200 queries"):
+        qid_terms = set(tokenisation(query)) # unique terms in a query
+        passages = document.loc[document['qid'] == qid] # passages answering to the qid. less than 1000
+        common_term = [term for term in qid_terms if term in terms] # query terms in the whole (stopwords removed) terms
         for (pid, passage) in zip(passages['pid'], document['passage']):
             score = 0.0
-            for term in common_term:
-                IDF_t = IDF_ts[terms.index(term)]
+            tf_ts = [] # list of IDF of terms in the common_term
+            for term in common_term: # t in (query q and document d)
+                IDF_t = IDF_ts[terms.index(term)] # get the IDF of the term by index
                 tf_t = passage.count(term)
                 score += IDF_t * tf_t
-            tmp.append([qid, pid, score])
+                tf_ts.append(tf_t)
+            tf_ts_length = np.linalg.norm(tf_ts)
+            if tf_ts_length == 0:
+                cosine_score = score
+            else:
+                cosine_score = score / (IDF_ts_length * tf_ts_length)
+            tmp.append([qid, pid, cosine_score])
     df_score = pd.DataFrame(tmp, columns=['qid', 'pid', 'score'], dtype=float).astype(
         dtype={'qid': int, 'pid': int, 'score': float})
     select_top_passages(df_score, save_raw=save_raw, save_top=save_top)
