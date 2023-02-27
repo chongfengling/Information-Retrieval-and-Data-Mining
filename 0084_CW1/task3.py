@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 import nltk
 
+
 def IDF(document: pd.DataFrame, terms: list):
     """Inverse Document Frequency of terms in a document collection
     IDF_t = log (N / n_t)
@@ -28,12 +29,13 @@ def IDF(document: pd.DataFrame, terms: list):
     II_counts_dict = II_counts(terms=terms, document=document)
     n_terms = []
     for _, counts in II_counts_dict.items():
-        n_terms.append(len(counts)) # occurrence, not frequency
-    n_terms = np.asarray(n_terms) # temrs - n_terms, one to one
+        n_terms.append(len(counts))  # occurrence, not frequency
+    n_terms = np.asarray(n_terms)  # temrs - n_terms, one to one
     IDF_ts = np.log10(N / n_terms)
     return IDF_ts
 
-def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.array, save_raw:bool=True, save_top:bool=True):
+
+def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.array, save_raw: bool = True, save_top: bool = True):
     """TF_t,d = Term frequency of term t in document d
     TF_t,d = 
 
@@ -52,7 +54,7 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
     save_top : bool
         save the sorted top100 TFIDF data or not
     """
-    
+
     # II_counts_dict = II_counts(terms=terms, document=document)
     tmp = []
     # df_score = pd.DataFrame(names=['qid', 'pid', 'score'])
@@ -67,14 +69,25 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
                 tf_t = passage.count(term)
                 score += IDF_t * tf_t
             tmp.append([qid, pid, score])
-    df_score = pd.DataFrame(tmp, columns =['qid', 'pid', 'score'], dtype = float).astype(dtype = {'qid': int, 'pid': int, 'score': float})
+    df_score = pd.DataFrame(tmp, columns=['qid', 'pid', 'score'], dtype=float).astype(
+        dtype={'qid': int, 'pid': int, 'score': float})
     select_top_passages(df_score, save_raw=save_raw, save_top=save_top)
-    
-def select_top_passages(df_raw:pd.DataFrame, save_raw:bool=True, save_top:bool=True):
+
+
+def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: bool = True):
     # name the output files by current time
     import datetime
     now = datetime.datetime.now()
     H_M = now.strftime('%H_%M')
+
+    df_top100 = df_raw.sort_values(by='score', ascending=False).groupby(
+        'qid').apply(lambda x: x.nlargest(100, columns='score')).reset_index(drop=True)
+
+    if save_raw:
+        df_raw.to_csv(f'TFIDF_{H_M}.csv', header=False, index=False)
+    if save_top:
+        df_top100.to_csv(f'TFIDF_TOP100_{H_M}.csv', header=False, index=False)
+
 
 def K_value(k1, b, dl, avdl):
     """consider the length of the document d,  K = k1 * ((1 - b) + b * dl / avdl)
@@ -97,5 +110,4 @@ def K_value(k1, b, dl, avdl):
     """
     return k1 * ((1 - b) * b * (dl / avdl))
 
-    if save_raw: df_raw.to_csv(f'TFIDF_{H_M}.csv', header=False, index=False)
-    if save_top: df_top100.to_csv(f'TFIDF_TOP100_{H_M}.csv', header=False, index=False)
+
