@@ -33,7 +33,7 @@ def II_simple(terms, document):
     Parameters
     ----------
     terms : list
-        loaded terms
+        saved terms (stopwords removed or kept), unique  
     document : pd.DataFrame
         candidate files, header = ['qid', 'pid', 'query', 'passage']
 
@@ -58,7 +58,7 @@ def II_counts(terms, document, returnList=False):
     terms : list
         loaded terms
     document : pd.DataFrame
-        candidate files, header = ['qid', 'pid', 'query', 'passage']
+        candidate-passages-top1000.tsv in pd.DataFrame, header = ['qid', 'pid', 'query', 'passage']
 
     Returns
     -------
@@ -88,7 +88,7 @@ def II_positions(terms, document):
     terms : list
         _description_
     document : pd.Dataframe
-        _description_
+        candidate-passages-top1000.tsv in pd.DataFrame, header = ['qid', 'pid', 'query', 'passage']
 
     Returns
     -------

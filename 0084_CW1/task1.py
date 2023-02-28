@@ -10,6 +10,9 @@ def tokenisation(astr, remove=True):
     1. lower the character
     2. substitute all non-alphanumeric characters (excluding whitespace)
     3. Return a tokenized (English) copy of *text* using NLTK's recommended word tokenizer
+    To Do:
+    1. remove url
+    
 
     Parameters
     ----------
@@ -143,6 +146,8 @@ def plot_distributions(x_axis, y_empircal, y_zipf, loglog=True, title='Untitled'
     plt.legend()
     plt.title(title)
     plt.show()
+    filename = title.replace(' ', '_')
+    plt.savefig(f'0084_CW1/assets/{filename}.png')
 
 def ex_1(astr):
     # Experiemnt 1: keep stop words
@@ -178,6 +183,7 @@ if __name__=='__main__':
     file_path = '0084_CW1/passage-collection.txt'
     with open(file_path, 'r') as f:
         astr = '.'.join([line.rstrip() for line in f])
+    nltk.download('punkt')
 
     ex_1(astr)
     ex_2(astr)
