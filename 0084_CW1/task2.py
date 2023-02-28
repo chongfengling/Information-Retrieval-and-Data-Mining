@@ -44,13 +44,13 @@ def II_simple(terms, document):
     """
     II_simple_dict = {key: [] for key in terms}
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_simple'):
-        passage_set = set(tokenisation(passage))
+        passage_set = set(tokenisation(passage, remove=False))
         for word in passage_set:
             if word in II_simple_dict.keys():
                 II_simple_dict[word].append((qid, pid))
     return II_simple_dict
 
-def II_counts(terms, document):
+def II_counts(terms, document, returnList=False):
     """inverted index with counts
 
     Parameters
@@ -68,7 +68,7 @@ def II_counts(terms, document):
     II_counts_dict = {key: [] for key in terms}
     II_simple_list = []
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_counts'):
-        passage_list = tokenisation(passage)
+        passage_list = tokenisation(passage, remove=False)
         passage_set = set(passage_list)
         for word in passage_set:
             if word in II_counts_dict.keys():
@@ -97,7 +97,7 @@ def II_positions(terms, document):
     """
     II_positions_dict = {key: [] for key in terms}
     for (qid, pid, passage) in tqdm(zip(document['qid'], document['pid'], document['passage']), desc='II_positions'):
-        passage_list = tokenisation(passage)
+        passage_list = tokenisation(passage, remove=False)
         passage_set = set(passage_list)
         for word in passage_set:
             if word in II_positions_dict.keys():

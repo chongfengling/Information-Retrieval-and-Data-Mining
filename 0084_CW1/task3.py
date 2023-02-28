@@ -139,8 +139,7 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
     # II_counts_dict = II_counts(terms=terms, document=document)
     II_counts_df = pd.DataFrame(II_counts(terms=terms, document=document, returnList=True), columns=['terms','qid', 'pid','freq'])
     tmp = [] # store the result
-    for (qid, q) in tqdm(zip(query['qid'], query['query']), desc="Computing BIM score"): # get query q. iterate the query one by one
-        q_list = tokenisation(q) # stopwords kept
+        q_list = tokenisation(q, remove=False) # stopwords kept
         qid_terms = set(q_list) # unique terms in a query
         simplified_term = [term for term in qid_terms if term in terms] # remove the stopwords
         R_passages = document.loc[document['qid'] == qid] # relative passages to the qid.

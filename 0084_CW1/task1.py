@@ -5,7 +5,7 @@ import nltk
 import re
 
 # text processing methods
-def tokenisation(astr):
+def tokenisation(astr, remove=True):
     """use nltk to
     1. lower the character
     2. substitute all non-alphanumeric characters (excluding whitespace)
@@ -23,9 +23,17 @@ def tokenisation(astr):
     """
     astr_lower = astr.lower()
     astr_lower_nonalpha = re.sub(r'[^a-z0-9\s]', ' ', astr_lower)
-    nltk.download('punkt')
+    # nltk.download('punkt')
     tokens_list = nltk.word_tokenize(astr_lower_nonalpha)
-    return tokens_list
+    if remove:
+        tmp = []
+        stop_words = nltk.corpus.stopwords.words('english')
+        for token in tokens_list:
+            if token not in stop_words:
+                tmp.append(token)
+        return tmp
+    else:
+        return tokens_list
 
 def remove_stop_words(aset, stop_words=[]):
     """remove stop words in the set aset
@@ -67,7 +75,7 @@ def text_preprocess(astr, remove=False, save_txt = False):
     set
         unique terms for a string astr
     """
-    tokens_list = tokenisation(astr)
+    tokens_list = tokenisation(astr, remove=False)
     unique_words = set(tokens_list)
     if remove:
         unique_words_removed = remove_stop_words(unique_words)
@@ -92,7 +100,7 @@ def occurrence_counter(astr, kept_terms=None):
     Counter
         _description_
     """
-    tokens_list = tokenisation(astr)
+    tokens_list = tokenisation(astr, remove=False)
     tokens_frequency = Counter(tokens_list)
     if kept_terms:
         tokens_set = set(tokens_list)
