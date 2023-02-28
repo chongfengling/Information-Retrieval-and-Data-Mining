@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import nltk
+from collections import Counter
 
 
 def IDF(document: pd.DataFrame, terms: list):
@@ -109,9 +110,9 @@ def BM25_Score(document: pd.DataFrame, query: pd.DataFrame, terms: list, Q, D, r
     D : _type_
         document collection D
     ri : _type_
-        number of relevant documents that contain term i
+        number of relevant documents that contain term i, ri=0
     R : _type_
-        number of relevant documents
+        number of relevant documents, R=0
     ni : _type_
         number of documents that contains term i
     N : _type_
@@ -133,43 +134,54 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
     # BIM score
     # document term weight in d
     # query term weight in q
-    N = len(document['pid'].unique()) # should be unique?
-    # avdl = np.average(document['passage'].apply(tokenisation).apply(len))
-    avdl = 58
-    # II_counts_dict = II_counts(terms=terms, document=document)
-    II_counts_df = pd.DataFrame(II_counts(terms=terms, document=document, returnList=True), columns=['terms','qid', 'pid','freq'])
-    tmp = [] # store the result
-        q_list = tokenisation(q, remove=False) # stopwords kept
-        qid_terms = set(q_list) # unique terms in a query
-        simplified_term = [term for term in qid_terms if term in terms] # remove the stopwords
-        R_passages = document.loc[document['qid'] == qid] # relative passages to the qid.
-        NR_passages = document.loc[document['qid'] != qid]
-        R = len(R_passages) # less than 1000. number of relevant documents
-        for (pid, passage) in tqdm(zip(R_passages['pid'], R_passages['passage']), desc='For each pid'): # get a single passage(document )d
-            BM25_qp = [] # BM25 score of a pair (query q, document d)
-            for term in simplified_term: # term i in query q, may or may not in a document(passage) d
-                # BIM score
-                df_i_occurs = II_counts_df[II_counts_df['terms'] == term] # all documents contains term i
-                ri = len(df_i_occurs.loc[df_i_occurs['qid'] == qid]) # the document related to the query
-                ni = len(df_i_occurs) # all documents contain term i
-                # BIM_tmp = ((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5))
-                BIM_score = np.log10(((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5)))
-                # document term weight in d
-                dl = len(passage)
-                K = K_value(k1=k1, b=b, dl=dl, avdl=avdl)
-                try:
-                    fi = df_i_occurs[df_i_occurs['pid'] == pid]['freq'].values[0]
-                except:
-                    fi=0
-                d_weight = (k1 + 1) * fi / (K + fi)
-                # query term weight in q
-                qfi = q_list.count(term)
-                q_weight = (k2 + 1) * qfi / (k2 + qfi)
-                # combine three parts
-                BM25_qp.append(BIM_score * d_weight * q_weight)
-            tmp.append([qid, pid, np.sum(BM25_qp)])
-    df_score = pd.DataFrame(tmp, columns=['qid', 'pid', 'BM25_score'], dtype=float).astype(
-        dtype={'qid': int, 'pid': int, 'BM25_score': float})
+    N = len(document['pid'])  # should be unique?
+    R = 0
+    ri = 0
+    tmp_all = []  # store the result
+
+    term_occurrence = Counter(pd.DataFrame(II_counts(
+        terms=terms, document=document, returnList=True), columns=['terms', 'qid', 'pid', 'freq'])['terms'].to_list()) # Counter object, key: terms, values: number of occurrences
+
+    tqdm.pandas(desc='Tokenisation(1/2) ......')
+    document['query_token'] = document['query'].progress_apply(
+        tokenisation, remove=True)  # stop words removed
+    tqdm.pandas(desc='Tokenisation(2/2) ......')
+    document['passage_token'] = document['passage'].progress_apply(
+        tokenisation, remove=True)  # stop words removed
+
+    avdl = np.average(document['passage_token'].apply(len))
+    # avdl = 58 (kept) or 34 (removed)
+
+    for (qid, pid, query_token, passage_token) in tqdm(zip(document['qid'], document['pid'], document['query_token'], document['passage_token']), desc="Iterating passages"):
+        query_token_set = set(query_token)
+        
+        BM25_td = [] # score of one term and one document
+        for term in query_token_set:
+
+            # all documents contains term i
+            # df_i_occurs = II_counts_df[II_counts_df['terms'] == term]
+            # ni = len(df_i_occurs)  # number of documents contain term i
+            ni = term_occurrence[term]
+
+            # 1. BIM score
+            BIM_score = np.log10(
+                ((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5)))
+            
+            # 2. document term weight in d
+            dl = len(passage_token) #length of the document d
+            K = K_value(k1=k1, b=b, dl=dl, avdl=avdl) #consider the length of the document d
+            fi = passage_token.count(term) # frequency of term i in the document d
+            d_weight = (k1 + 1) * fi / (K + fi)
+
+            # 3. query term weight in q
+            qfi = query_token.count(term) # frequency of term i in the query q
+            q_weight = (k2 + 1) * qfi / (k2 + qfi)
+
+            # combine three parts
+            BM25_td.append(BIM_score * d_weight * q_weight)
+        tmp_all.append([qid, pid, np.sum(BM25_td)])
+    df_score = pd.DataFrame(tmp_all, columns=['qid', 'pid', 'score'], dtype=float).astype(
+        dtype={'qid': int, 'pid': int, 'score': float})
     select_top_passages(df_score, filename='BM25')
 
 
