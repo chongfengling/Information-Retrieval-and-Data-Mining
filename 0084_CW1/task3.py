@@ -1,5 +1,5 @@
 from task1 import tokenisation, occurrence_counter
-from task2 import load_document, load_terms, II_counts
+from task2 import load_document, load_terms, II_counts, II_simple
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -16,7 +16,7 @@ def IDF(document: pd.DataFrame, terms: list):
     Parameters
     ----------
     document : pd.DataFrame
-        candidate-passages-top1000.tsv
+        candidate-passages-top1000.tsv in pd.DataFrame, header = ['qid', 'pid', 'query', 'passage']
     terms : list
         saved terms (stopwords removed or kept), unique      
 
@@ -25,7 +25,7 @@ def IDF(document: pd.DataFrame, terms: list):
     np.array
         IDF of corresponding terms
     """
-    N = len(document['pid'].unique())
+    N = len(document['pid'].unique()) # should be unique?
     II_counts_dict = II_counts(terms=terms, document=document)
     n_terms = []
     for _, counts in II_counts_dict.items():
@@ -42,7 +42,7 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
     Parameters
     ----------
     document : pd.DataFrame
-        _description_
+        candidate-passages-top1000.tsv in pd.DataFrame, header = ['qid', 'pid', 'query', 'passage']
     query : pd.DataFrame
         _description_
     terms : list
@@ -60,11 +60,11 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
     # length of idf
     IDF_ts_length = np.linalg.norm(IDF_ts)
     # df_score = pd.DataFrame(names=['qid', 'pid', 'score'])
-    for (qid, query) in tqdm(zip(query['qid'], query['query']), desc="Get TF-IDF for 200 queries"):
-        qid_terms = set(tokenisation(query)) # unique terms in a query
+    for (qid, q) in tqdm(zip(query['qid'], query['query']), desc="Computing TF-IDF for 200 queries"):
+        qid_terms = set(tokenisation(q, remove=False)) # unique terms in a query
         passages = document.loc[document['qid'] == qid] # passages answering to the qid. less than 1000
         common_term = [term for term in qid_terms if term in terms] # query terms in the whole (stopwords removed) terms
-        for (pid, passage) in zip(passages['pid'], document['passage']):
+        for (pid, passage) in zip(passages['pid'], passages['passage']):
             score = 0.0
             tf_ts = [] # list of IDF of terms in the common_term
             for term in common_term: # t in (query q and document d)
@@ -195,3 +195,18 @@ def K_value(k1, b, dl, avdl):
     return k1 * ((1 - b) * b * (dl / avdl))
 
 
+def D5(candidates, terms, query):
+    print('Calculating IDF ...')
+    IDF_ts = IDF(document=candidates, terms=terms)
+    print('Calculating TFIDF ...')
+    TF_IDF(document=candidates, query=query, terms=terms, IDF_ts=IDF_ts)
+
+if __name__ == '__main__':
+    nltk.download('punkt')
+    candidates = load_document('0084_CW1/candidate-passages-top1000.tsv') # document collection D
+    queries = load_document('0084_CW1/test-queries.tsv',
+                            names=['qid', 'query']) # query collection Q
+    terms_kept = load_terms(file_path='0084_CW1/terms_kept.txt') # terms in D
+    terms_removed = load_terms(file_path='0084_CW1/terms_removed.txt')
+
+    # D5(candidates=candidates, terms=terms_removed, query=queries)
