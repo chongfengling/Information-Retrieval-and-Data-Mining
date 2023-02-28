@@ -26,7 +26,7 @@ def IDF(document: pd.DataFrame, terms: list):
     np.array
         IDF of corresponding terms
     """
-    N = len(document['pid'].unique()) # should be unique?
+    N = len(document['pid'].unique())  # should be unique?
     II_counts_dict = II_counts(terms=terms, document=document)
     n_terms = []
     for _, counts in II_counts_dict.items():
@@ -141,7 +141,7 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
     # BIM score
     # document term weight in d
     # query term weight in q
-    N = len(document['pid'])  # should be unique?
+    N = len(document['pid'].unique())  # should be unique?
     R = 0
     ri = 0
     tmp_all = []  # store the result
