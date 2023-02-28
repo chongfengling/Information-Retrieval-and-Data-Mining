@@ -62,14 +62,18 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
     IDF_ts_length = np.linalg.norm(IDF_ts)
     # df_score = pd.DataFrame(names=['qid', 'pid', 'score'])
     for (qid, q) in tqdm(zip(query['qid'], query['query']), desc="Computing TF-IDF for 200 queries"):
-        qid_terms = set(tokenisation(q, remove=False)) # unique terms in a query
-        passages = document.loc[document['qid'] == qid] # passages answering to the qid. less than 1000
-        common_term = [term for term in qid_terms if term in terms] # query terms in the whole (stopwords removed) terms
+        # unique terms in a query
+        qid_terms = set(tokenisation(q, remove=False))
+        # passages answering to the qid. less than 1000
+        passages = document.loc[document['qid'] == qid]
+        # query terms in the whole (stopwords removed) terms
+        common_term = [term for term in qid_terms if term in terms]
         for (pid, passage) in zip(passages['pid'], passages['passage']):
             score = 0.0
-            tf_ts = [] # list of IDF of terms in the common_term
-            for term in common_term: # t in (query q and document d)
-                IDF_t = IDF_ts[terms.index(term)] # get the IDF of the term by index
+            tf_ts = []  # list of IDF of terms in the common_term
+            for term in common_term:  # t in (query q and document d)
+                # get the IDF of the term by index
+                IDF_t = IDF_ts[terms.index(term)]
                 tf_t = passage.count(term)
                 score += IDF_t * tf_t
                 tf_ts.append(tf_t)
@@ -81,7 +85,8 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
             tmp.append([qid, pid, cosine_score])
     df_score = pd.DataFrame(tmp, columns=['qid', 'pid', 'score'], dtype=float).astype(
         dtype={'qid': int, 'pid': int, 'score': float})
-    select_top_passages(df_score, save_raw=save_raw, save_top=save_top, filename='TF_IDF')
+    select_top_passages(df_score, save_raw=save_raw,
+                        save_top=save_top, filename='TF_IDF')
 
 
 def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: bool = True, filename: str = 'None'):
@@ -96,7 +101,8 @@ def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: b
     if save_raw:
         df_raw.to_csv(f'{filename}_{H_M}.csv', header=False, index=False)
     if save_top:
-        df_top100.to_csv(f'{filename}_TOP100_{H_M}.csv', header=False, index=False)
+        df_top100.to_csv(f'{filename}_TOP100_{H_M}.csv',
+                         header=False, index=False)
 
 
 def BM25_Score(document: pd.DataFrame, query: pd.DataFrame, terms: list, Q, D, ri, R, ni, N, k1, k2, fi, qfi, K):
@@ -130,6 +136,7 @@ def BM25_Score(document: pd.DataFrame, query: pd.DataFrame, terms: list, Q, D, r
     """
     pass
 
+
 def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
     # BIM score
     # document term weight in d
@@ -140,7 +147,7 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
     tmp_all = []  # store the result
 
     term_occurrence = Counter(pd.DataFrame(II_counts(
-        terms=terms, document=document, returnList=True), columns=['terms', 'qid', 'pid', 'freq'])['terms'].to_list()) # Counter object, key: terms, values: number of occurrences
+        terms=terms, document=document, returnList=True), columns=['terms', 'qid', 'pid', 'freq'])['terms'].to_list())  # Counter object, key: terms, values: number of occurrences
 
     tqdm.pandas(desc='Tokenisation(1/2) ......')
     document['query_token'] = document['query'].progress_apply(
@@ -154,8 +161,8 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
 
     for (qid, pid, query_token, passage_token) in tqdm(zip(document['qid'], document['pid'], document['query_token'], document['passage_token']), desc="Iterating passages"):
         query_token_set = set(query_token)
-        
-        BM25_td = [] # score of one term and one document
+
+        BM25_td = []  # score of one term and one document
         for term in query_token_set:
 
             # all documents contains term i
@@ -166,15 +173,17 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
             # 1. BIM score
             BIM_score = np.log10(
                 ((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5)))
-            
+
             # 2. document term weight in d
-            dl = len(passage_token) #length of the document d
-            K = K_value(k1=k1, b=b, dl=dl, avdl=avdl) #consider the length of the document d
-            fi = passage_token.count(term) # frequency of term i in the document d
+            dl = len(passage_token)  # length of the document d
+            # consider the length of the document d
+            K = K_value(k1=k1, b=b, dl=dl, avdl=avdl)
+            # frequency of term i in the document d
+            fi = passage_token.count(term)
             d_weight = (k1 + 1) * fi / (K + fi)
 
             # 3. query term weight in q
-            qfi = query_token.count(term) # frequency of term i in the query q
+            qfi = query_token.count(term)  # frequency of term i in the query q
             q_weight = (k2 + 1) * qfi / (k2 + qfi)
 
             # combine three parts
@@ -213,12 +222,19 @@ def D5(candidates, terms, query):
     print('Calculating TFIDF ...')
     TF_IDF(document=candidates, query=query, terms=terms, IDF_ts=IDF_ts)
 
+
+def D6(candidates, terms, query):
+    BM25(document=candidates, terms=terms, query=query, k1=1.2, k2=100, b=0.75)
+
+
 if __name__ == '__main__':
     nltk.download('punkt')
-    candidates = load_document('0084_CW1/candidate-passages-top1000.tsv') # document collection D
+    candidates = load_document(
+        '0084_CW1/candidate-passages-top1000.tsv')  # document collection D
     queries = load_document('0084_CW1/test-queries.tsv',
-                            names=['qid', 'query']) # query collection Q
-    terms_kept = load_terms(file_path='0084_CW1/terms_kept.txt') # terms in D
+                            names=['qid', 'query'])  # query collection Q
+    terms_kept = load_terms(file_path='0084_CW1/terms_kept.txt')  # terms in D
     terms_removed = load_terms(file_path='0084_CW1/terms_removed.txt')
 
     # D5(candidates=candidates, terms=terms_removed, query=queries)
+    D6(candidates=candidates, terms=terms_removed, query=queries)
