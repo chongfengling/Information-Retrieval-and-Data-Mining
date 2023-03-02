@@ -85,18 +85,21 @@ def TF_IDF(document: pd.DataFrame, query: pd.DataFrame, terms: list, IDF_ts: np.
             tmp.append([qid, pid, cosine_score])
     df_score = pd.DataFrame(tmp, columns=['qid', 'pid', 'score'], dtype=float).astype(
         dtype={'qid': int, 'pid': int, 'score': float})
-    select_top_passages(df_score, save_raw=save_raw,
+    select_top_passages(df_score, save_raw=save_raw, query=query,
                         save_top=save_top, filename='TF_IDF')
 
 
-def select_top_passages(df_raw: pd.DataFrame, save_raw: bool = True, save_top: bool = True, filename: str = 'None'):
+def select_top_passages(df_raw: pd.DataFrame, query: pd.DataFrame, save_raw: bool = True, save_top: bool = True, filename: str = 'None'):
     # name the output files by current time
     import datetime
     now = datetime.datetime.now()
     H_M = now.strftime('%H_%M')
-
-    df_top100 = df_raw.sort_values(by='score', ascending=False).groupby(
-        'qid').apply(lambda x: x.nlargest(100, columns='score')).reset_index(drop=True)
+    
+    qid_order = query['qid'].to_list()
+    df_new = df_raw.groupby('qid').apply(lambda x: x.nlargest(
+        100, columns='score')).reset_index(drop=True)
+    df_new['qid'] = pd.Categorical(df_new['qid'], categories=qid_order, ordered=True)
+    df_top100 = df_new.sort_values(by=['qid', 'score'], ascending=[True,False])
 
     if save_raw:
         df_raw.to_csv(f'{filename}_{H_M}.csv', header=False, index=False)
@@ -191,7 +194,7 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
         tmp_all.append([qid, pid, np.sum(BM25_td)])
     df_score = pd.DataFrame(tmp_all, columns=['qid', 'pid', 'score'], dtype=float).astype(
         dtype={'qid': int, 'pid': int, 'score': float})
-    select_top_passages(df_score, filename='BM25')
+    select_top_passages(df_raw=df_score, query=query, filename='BM25')
 
 
 def K_value(k1, b, dl, avdl):
@@ -224,7 +227,8 @@ def D5(candidates, terms, query):
 
 
 def D6(candidates, terms, query):
-    BM25(document=candidates, terms=terms, query=query, k1=1.2, k2=100, b=0.75)
+    print('Calculating BM25 score ...')
+    BM25(document=candidates, terms=terms, k1=1.2, k2=100, b=0.75, query=query)
 
 
 if __name__ == '__main__':
@@ -233,7 +237,6 @@ if __name__ == '__main__':
         '0084_CW1/candidate-passages-top1000.tsv')  # document collection D
     queries = load_document('0084_CW1/test-queries.tsv',
                             names=['qid', 'query'])  # query collection Q
-    terms_kept = load_terms(file_path='0084_CW1/terms_kept.txt')  # terms in D
     terms_removed = load_terms(file_path='0084_CW1/terms_removed.txt')
 
     # D5(candidates=candidates, terms=terms_removed, query=queries)

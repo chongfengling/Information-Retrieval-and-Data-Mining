@@ -9,7 +9,7 @@ from itertools import chain
 from collections import Counter
 
 
-def query_llh_model(document: pd.DataFrame, terms: list, eps: float = 0.1, mu=50, model: str = 'LS'):
+def query_llh_model(document: pd.DataFrame, query: pd.DataFrame, terms: list, eps: float = 0.1, mu=50, model: str = 'LS'):
     """P(Q|M_D) = \Pai (P(q|M_D), ...) for term q in the query Q and a language model M_D based on a document D
 
     Parameters
@@ -57,13 +57,13 @@ def query_llh_model(document: pd.DataFrame, terms: list, eps: float = 0.1, mu=50
             filename = 'LC'
         elif model == 'DS':
             score = Dirichlet_smooth(
-                D_len=D_len, mu=mu, c_q=c_q, m_q=m_q, DD_len=DD_len, V_len=V_len)
+                D_len=D_len, mu=mu, c_q=c_q, m_q=m_q, DD_len=DD_len)
             filename = 'DS'
 
         tmp_all.append([qid, pid, score])
     df_score = pd.DataFrame(tmp_all, columns=['qid', 'pid', 'score'], dtype=float).astype(
         dtype={'qid': int, 'pid': int, 'score': float})
-    select_top_passages(df_score, filename=filename)
+    select_top_passages(df_raw=df_score, query=query, filename=filename)
 
 
 def Laplace_smooth(m_q: list, D_len: int, V_len: int, Q_len: int) -> float:
@@ -115,7 +115,7 @@ def Lidstone_correction(m_q: list, D_len: int, V_len: int, eps: float) -> float:
     return score
 
 
-def Dirichlet_smooth(m_q:list, c_q:list, D_len:int, DD_len: int, mu:float):
+def Dirichlet_smooth(m_q: list, c_q: list, D_len: int, DD_len: int, mu: float):
     """calculate score by Dirichlet Smooth
 
     Parameters
@@ -142,13 +142,15 @@ def Dirichlet_smooth(m_q:list, c_q:list, D_len:int, DD_len: int, mu:float):
 
 
 if __name__ == '__main__':
-    print('s')
-    # nltk.download('punkt')
+    nltk.download('punkt')
     candidates = load_document(
         '0084_CW1/candidate-passages-top1000.tsv')  # document collection D
     # terms in document collection D without stop words
     terms_removed = load_terms(file_path='0084_CW1/terms_removed.txt')
-    query_llh_model(document=candidates, terms=terms_removed, model='LS')
-    query_llh_model(document=candidates, terms=terms_removed, model='LC')
-    query_llh_model(document=candidates, terms=terms_removed, model='DS')
+    queries = load_document('0084_CW1/test-queries.tsv',
+                            names=['qid', 'query'])  # query collection Q
 
+    # query_llh_model(document=candidates, terms=terms_removed, model='LS')
+    # query_llh_model(document=candidates, terms=terms_removed, model='LC')
+    query_llh_model(document=candidates, terms=terms_removed,
+                    query=queries, model='DS')
