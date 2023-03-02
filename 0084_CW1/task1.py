@@ -18,25 +18,29 @@ def tokenisation(astr, remove=True):
 
     Parameters
     ----------
-    astr : _type_
-        _description_
+    astr : string
+        all characters in the collection
 
     Returns
     -------
     list
         tokens
     """
-    astr_lower = astr.lower()
+    # remove url
+    astr_no_url = re.sub(r"http\S+", "", astr)
+    # lower character
+    astr_lower = astr_no_url.lower()
+    # remove non alpha characters
     astr_lower_nonalpha = re.sub(r'[^a-z0-9\s]', ' ', astr_lower)
     # nltk.download('punkt')
     tokens_list = nltk.word_tokenize(astr_lower_nonalpha)
     if remove:
-        tmp = []
+        tokens_list_removed = []
         stop_words = nltk.corpus.stopwords.words('english')
         for token in tokens_list:
             if token not in stop_words:
-                tmp.append(token)
-        return tmp
+                tokens_list_removed.append(token)
+        return tokens_list_removed
     else:
         return tokens_list
 
@@ -53,7 +57,7 @@ def remove_stop_words(aset, stop_words=[]):
 
     Returns
     -------
-    aset
+    set
         _description_
     """
     if stop_words:
@@ -73,7 +77,7 @@ def text_preprocess(astr, remove=False, save_txt=False):
     Parameters
     ----------
     astr : string
-        document?!
+        document
     remove_stop_words : bool, optional
         _description_, by default False
 
