@@ -4,17 +4,12 @@ from collections import Counter
 import nltk
 import re
 
-# text processing methods
-
 
 def tokenisation(astr, remove=True):
     """use nltk to
     1. lower the character
     2. substitute all non-alphanumeric characters (excluding whitespace)
     3. Return a tokenized (English) copy of *text* using NLTK's recommended word tokenizer
-    To Do:
-    1. remove url
-
 
     Parameters
     ----------
@@ -27,7 +22,7 @@ def tokenisation(astr, remove=True):
         tokens
     """
     # remove url
-    astr_no_url = re.sub(r"http\S+", "", astr)
+    astr_no_url = re.sub(r"http\S+", " ", astr)
     # lower character
     astr_lower = astr_no_url.lower()
     # remove non alpha characters
@@ -82,7 +77,7 @@ def occurrence_counter(astr, kept_terms=None):
     astr : string
         _description_
     kept_terms : set, optional
-        occurrence frequency of terms should be kept, by default None
+        occurrence frequency of terms, by default None, that is, keep the frequency of stopwords
 
     Returns
     -------
@@ -96,7 +91,6 @@ def occurrence_counter(astr, kept_terms=None):
         removed_terms = tokens_set - kept_terms
         for removed_term in removed_terms:
             del tokens_frequency[removed_term]
-
     return tokens_frequency
 
 
@@ -126,17 +120,21 @@ def Zipf_func(s, N):
 
 
 def plot_distributions(x_axis, y_empircal, y_zipf, loglog=True, title='Untitled'):
+    fig, ax = plt.subplots()
     if loglog:
-        plt.loglog(x_axis, y_empircal, label='prob', linestyle='dotted')
-        plt.loglog(x_axis, y_zipf, label='zipf')
+        ax.loglog(x_axis, y_empircal, label='prob', linestyle='dotted')
+        ax.loglog(x_axis, y_zipf, label='zipf')
     else:
-        plt.plot(x_axis, y_empircal, label='prob', linestyle='dotted')
-        plt.plot(x_axis, y_zipf, label='zipf')
-    plt.legend()
-    plt.title(title)
-    plt.show()
+        ax.plot(x_axis, y_empircal, label='prob', linestyle='dotted')
+        ax.plot(x_axis, y_zipf, label='zipf')
+    ax.set_xlabel('Rank')
+    ax.set_ylabel('Probability')
+    ax.set_title(title)
+    ax.legend()
+    # ax.title(title)
+    # plt.show()
     filename = title.replace(' ', '_')
-    plt.savefig(f'0084_CW1/assets/{filename}.png')
+    fig.savefig(f'0084_CW1/assets/{filename}.png')
 
 
 def ex_1(astr):
@@ -153,7 +151,9 @@ def ex_1(astr):
     normalized_prob = frequency_normalization(terms_frequency)
     zipf = Zipf_func(1, size_of_terms)
     plot_distributions(x_axis, y_empircal=normalized_prob,
-                       y_zipf=zipf, title='Keep stop words')
+                       y_zipf=zipf, loglog=False, title='Keep stop words')
+    plot_distributions(x_axis, y_empircal=normalized_prob,
+                       y_zipf=zipf, title='Keep stop words (loglog)')
 
 
 def ex_2(astr):
@@ -171,7 +171,9 @@ def ex_2(astr):
     normalized_prob = frequency_normalization(terms_frequency)
     zipf = Zipf_func(1, size_of_terms)
     plot_distributions(x_axis, y_empircal=normalized_prob,
-                       y_zipf=zipf, title='remove stop words')
+                       y_zipf=zipf, loglog=False, title='Remove stop words')
+    plot_distributions(x_axis, y_empircal=normalized_prob,
+                       y_zipf=zipf, title='Remove stop words (loglog)')
 
 
 if __name__ == '__main__':
@@ -181,6 +183,7 @@ if __name__ == '__main__':
     with open(file_path, 'r') as f:
         astr = '.'.join([line.rstrip() for line in f])
     nltk.download('punkt')
-
+    # keep stopwords
     ex_1(astr)
+    # remove stopwords
     ex_2(astr)
