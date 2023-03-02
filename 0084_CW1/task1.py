@@ -45,32 +45,6 @@ def tokenisation(astr, remove=True):
         return tokens_list
 
 
-def remove_stop_words(aset, stop_words=[]):
-    """remove stop words in the set aset
-
-    Parameters
-    ----------
-    aset : aset
-        _description_
-    stop_words : list, optional
-        _description_, by default []
-
-    Returns
-    -------
-    set
-        _description_
-    """
-    if stop_words:
-        pass
-    else:
-        nltk.download('stopwords')
-        stop_words = nltk.corpus.stopwords.words('english')
-        # stop_words = ['the', 'an', 'a', 'to', 'so', 'then', 'of', 'and', 'is', 'in', 'for', 'or', 'that', 'are', 'The', 'on']
-    for word in stop_words:
-        aset.discard(word)
-    return aset
-
-
 def text_preprocess(astr, remove=False, save_txt=False):
     """text preprocess
 
@@ -86,14 +60,13 @@ def text_preprocess(astr, remove=False, save_txt=False):
     set
         unique terms for a string astr
     """
-    tokens_list = tokenisation(astr, remove=False)
+    tokens_list = tokenisation(astr, remove=remove)
     unique_words = set(tokens_list)
     if remove:
-        unique_words_removed = remove_stop_words(unique_words)
         if save_txt:
             np.savetxt('0084_CW1/terms_removed.txt',
-                       np.array(list(unique_words_removed)), delimiter='\n', fmt="%s")
-        return unique_words_removed
+                       np.array(list(unique_words)), delimiter='\n', fmt="%s")
+        return unique_words
     else:
         if save_txt:
             np.savetxt('0084_CW1/terms_kept.txt',
