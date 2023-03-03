@@ -6,18 +6,18 @@ from tqdm import tqdm
 from task1 import tokenisation
 
 
-def load_document(file_path='0084_CW1/candidate-passages-top1000.tsv', names=['qid', 'pid', 'query', 'passage']):
+def load_document(file_path='candidate-passages-top1000.tsv', names=['qid', 'pid', 'query', 'passage']):
     df = pd.read_csv(file_path, sep='\t', names=names)
     return df
 
 
-def load_terms(file_path='0084_CW1/terms_kept.txt'):
+def load_terms(file_path='terms_kept.txt'):
     """load terms generated in the task 1
 
     Parameters
     ----------
     file_path : str, file path
-        _description_, by default '0084_CW1/terms_kept.txt'
+        _description_, by default 'terms_kept.txt'
 
     Returns
     -------
@@ -63,11 +63,13 @@ def II_counts(terms, document, returnList=False):
         loaded terms
     document : pd.DataFrame
         candidate-passages-top1000.tsv in pd.DataFrame, header = ['qid', 'pid', 'query', 'passage']
+    returnList : bool
+        return as List type. [[term, qid, pid, frequency], [term, qid, pid, frequency], ...]
 
     Returns
     -------
     dict
-        (key, value) = (term, [[(qid, pid), count], [(qid, pid), count], ...])
+        (key, value) = (term, [[(qid, pid), frequency], [(qid, pid), frequency], ...])
     """
     II_counts_dict = {key: [] for key in terms}
     II_simple_list = []
@@ -114,10 +116,9 @@ def II_positions(terms, document):
 
 if __name__ == '__main__':
     document = load_document(
-        file_path='0084_CW1/candidate-passages-top1000.tsv')
-    terms = load_terms(file_path='0084_CW1/terms_kept.txt')
+        file_path='candidate-passages-top1000.tsv')
+    terms = load_terms(file_path='terms_kept.txt')
+    # Three methods in Inverted Index
     # res = II_simple(terms=terms, document=document)
-    # print(res)
-    res = II_counts(terms=terms, document=document)
-
+    res = II_counts(terms=terms, document=document) # used in task 3 and task 4
     # res = II_positions(terms=terms, document=document)

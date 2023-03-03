@@ -59,12 +59,12 @@ def text_preprocess(astr, remove=False, save_txt=False):
     unique_words = set(tokens_list)
     if remove:
         if save_txt:
-            np.savetxt('0084_CW1/terms_removed.txt',
+            np.savetxt('terms_removed.txt',
                        np.array(list(unique_words)), delimiter='\n', fmt="%s")
         return unique_words
     else:
         if save_txt:
-            np.savetxt('0084_CW1/terms_kept.txt',
+            np.savetxt('terms_kept.txt',
                        np.array(list(unique_words)), delimiter='\n', fmt="%s")
         return unique_words
 
@@ -119,13 +119,13 @@ def Zipf_func(s, N):
     return y_values
 
 
-def plot_distributions(x_axis, y_empircal, y_zipf, loglog=True, title='Untitled'):
+def plot_distributions(x_axis, y_empirical, y_zipf, loglog=True, title='Untitled'):
     fig, ax = plt.subplots()
     if loglog:
-        ax.loglog(x_axis, y_empircal, label='prob', linestyle='dotted')
+        ax.loglog(x_axis, y_empirical, label='prob', linestyle='dotted')
         ax.loglog(x_axis, y_zipf, label='zipf')
     else:
-        ax.plot(x_axis, y_empircal, label='prob', linestyle='dotted')
+        ax.plot(x_axis, y_empirical, label='prob', linestyle='dotted')
         ax.plot(x_axis, y_zipf, label='zipf')
     ax.set_xlabel('Rank')
     ax.set_ylabel('Probability')
@@ -134,7 +134,7 @@ def plot_distributions(x_axis, y_empircal, y_zipf, loglog=True, title='Untitled'
     # ax.title(title)
     # plt.show()
     filename = title.replace(' ', '_')
-    fig.savefig(f'0084_CW1/assets/{filename}.png')
+    fig.savefig(f'assets/{filename}.png')
 
 
 def ex_1(astr):
@@ -178,8 +178,8 @@ def ex_2(astr):
 
 if __name__ == '__main__':
     # reading data from the file and convert it to string
-    file_path = '0084_CW1/task1_small.txt'
-    file_path = '0084_CW1/passage-collection.txt'
+    # file_path = 'task1_small.txt'
+    file_path = 'passage-collection.txt'
     with open(file_path, 'r') as f:
         astr = '.'.join([line.rstrip() for line in f])
     nltk.download('punkt')
