@@ -36,6 +36,26 @@ def mAP(df: pd.DataFrame):
     return AP_df.mean()
 
 
+def DCG(df: pd.DataFrame):
+    """get DCG for a set of retrieved passages of some queries
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        _description_
+    """
+    # record the rank for passages of each query
+    df['rank'] = df.groupby('qid').cumcount() + 1
+    df['gain'] = 2 ** df['relevancy'] - 1
+    df['discount'] = np.log2(1 + df['rank'])
+    # DCG for each passage of a query
+    df['DCG_p'] = df['gain'] / df['discount']
+    # DCG of queries (evaluation)
+    df_DCG = df.groupby('qid')['DCG_p'].apply(sum)
+    # DCG of queries (perfect)
+    return df_DCG
+
+
 if __name__ == '__main__':
     BM25_top100_df = pd.read_csv(
         '0084_CW2/bm25_ordered.csv', names=['qid', 'pid', 'score', 'relevancy']
