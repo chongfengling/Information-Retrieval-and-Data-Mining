@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+from BM25 import select_top_passages
 
 
 def mAP(df: pd.DataFrame):
@@ -37,7 +38,7 @@ def mAP(df: pd.DataFrame):
 
 
 def DCG(df: pd.DataFrame):
-    """get DCG for a set of retrieved passages of some queries
+    """get Discounted Cumulative Gain for a set of retrieved passages of some queries
 
     Parameters
     ----------
@@ -56,8 +57,59 @@ def DCG(df: pd.DataFrame):
     return df_DCG
 
 
-if __name__ == '__main__':
-    BM25_top100_df = pd.read_csv(
-        '0084_CW2/bm25_ordered.csv', names=['qid', 'pid', 'score', 'relevancy']
+def mNDCG(BM25_topN_df: pd.DataFrame, top_n: int):
+    """get mean Normalized DCG
+
+    Parameters
+    ----------
+    BM25_topN_df : pd.DataFrame
+        BM25 result
+    top_n : int
+        top n
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    # load the whole validation data
+    val_df = pd.read_csv('0084_CW2/validation_data.tsv', sep='\t')
+    # delete unused save memory
+    del val_df['queries']
+    del val_df['passage']
+    # select top n passages for each query in the given validation data ranked by relevancy.
+    val_opt = select_top_passages(
+        df_raw=val_df,
+        save_raw=False,
+        save_top=False,
+        top_n=top_n,
+        filename='opt_retrieval',
+        group_col='qid',
+        rank_col='relevancy',
     )
-    print(mAP(BM25_top100_df))  # 0.23475818881692506
+    # DCG
+    DCG_BM25 = DCG(BM25_topN_df)
+    # idea DCG
+    IDCG = DCG(val_opt)
+    # NDCG
+    NDCG = DCG_BM25 / IDCG
+    # return mean NDCG
+    return np.mean(NDCG)
+
+
+if __name__ == '__main__':
+    BM25_top3_df = pd.read_csv(
+        '0084_CW2/bm25_ordered_top3.csv', names=['qid', 'pid', 'score', 'relevancy']
+    )
+    BM25_top10_df = pd.read_csv(
+        '0084_CW2/bm25_ordered_top10.csv', names=['qid', 'pid', 'score', 'relevancy']
+    )
+    BM25_top100_df = pd.read_csv(
+        '0084_CW2/bm25_ordered_top100.csv', names=['qid', 'pid', 'score', 'relevancy']
+    )
+
+    # print(mAP(BM25_top100_df))  # 0.23475818881692506
+
+    print(mNDCG(BM25_top3_df, top_n=3))  # top003 = 0.19853070832150987
+    print(mNDCG(BM25_top10_df, top_n=10))  # top010 = 0.28584393775886474
+    print(mNDCG(BM25_top100_df, top_n=100))  # top100 = 0.35337428212970406

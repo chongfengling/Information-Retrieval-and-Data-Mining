@@ -295,9 +295,9 @@ def select_top_passages(
 
 
 if __name__ == '__main__':
+    ''' BM25 model
     nltk.download('punkt')
     # run BM25 model
-    '''
     with open(
         '/Users/ling/MyDocuments/COMP0084/0084_CW1/passage-collection.txt', 'r'
     ) as f:
