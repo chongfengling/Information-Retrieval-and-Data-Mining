@@ -200,9 +200,7 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
     df_score = pd.DataFrame(
         tmp_all, columns=['qid', 'pid', 'score', 'relevancy'], dtype=float
     ).astype(dtype={'qid': int, 'pid': int, 'score': float, 'relevancy': float})
-    select_top_passages(
-        df_raw=df_score, query=query, filename='bm25', save_raw=True, save_top=True
-    )
+    select_top_passages(df_raw=df_score, filename='bm25', save_raw=True, save_top=True)
 
 
 def K_value(k1, b, dl, avdl):
@@ -264,10 +262,12 @@ def II_counts(terms, document, returnList=False):
 
 def select_top_passages(
     df_raw: pd.DataFrame,
-    query: pd.DataFrame,
     save_raw: bool = True,
     save_top: bool = True,
     filename: str = 'None',
+    top_n: int = 100,
+    rank_col: str = 'score',
+    group_col: str = 'qid',
 ):
     # name the output files by current time
     import datetime
@@ -275,21 +275,23 @@ def select_top_passages(
     now = datetime.datetime.now()
     H_M = now.strftime('%H_%M')
 
-    # qid_order = query['qid'].to_list()
     df_new = (
-        df_raw.groupby('qid')
-        .apply(lambda x: x.nlargest(100, columns='score'))
+        df_raw.groupby(group_col)
+        .apply(lambda x: x.nlargest(top_n, columns=rank_col))
         .reset_index(drop=True)
     )
-    # df_new['qid'] = pd.Categorical(df_new['qid'], categories=qid_order, ordered=True)
-    # df_top100 = df_new.sort_values(by=['qid', 'score'], ascending=[True, False])
 
     if save_raw:
-        df_raw.to_csv(f'0084_CW2/{filename}_raw_{H_M}.csv', header=False, index=False)
+        df_raw.to_csv(
+            f'0084_CW2/{filename}_raw_top{top_n}_{H_M}.csv', header=False, index=False
+        )
     if save_top:
         df_new.to_csv(
-            f'0084_CW2/{filename}_ordered_{H_M}.csv', header=False, index=False
+            f'0084_CW2/{filename}_ordered_top{top_n}_{H_M}.csv',
+            header=False,
+            index=False,
         )
+    return df_new
 
 
 if __name__ == '__main__':
@@ -319,5 +321,5 @@ if __name__ == '__main__':
         '0084_CW2/bm25_raw.csv', names=['qid', 'pid', 'score', 'relevancy']
     )
     select_top_passages(
-        df_raw=df_score, query=queries, filename='bm25', save_raw=False, save_top=True
+        df_raw=df_score, filename='bm25', save_raw=False, top_n=100, save_top=True
     )
