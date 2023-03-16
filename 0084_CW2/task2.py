@@ -1,4 +1,9 @@
-from gensim.models import word2vec
+from gensim.models import Word2Vec
+from BM25 import load_document, tokenisation, select_top_passages
+import nltk
+from tqdm import tqdm
+import pandas as pd
+import numpy as np
 
 
 class LogisticRegression:
@@ -12,6 +17,52 @@ class LogisticRegression:
         pass
 
 
+def text_preprocess(data:pd.DataFrame, save_name: str = None):
+    """from texts to vectors
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        dataset
+    save_name : str, optional
+        save or not, by default None
+
+    Returns
+    -------
+    pd.DataFrame
+        embedding dataset
+    """
+    # sample: subsample
+    sampled_df = subsampling(data).reset_index(drop=False)
+    # tokenisation of query and passage text
+    sampled_query = sampled_df['queries'].apply(tokenisation, remove=True)
+    sampled_passage = sampled_df['passage'].apply(tokenisation, remove=True)
+    # build model
+    query_model = Word2Vec(
+        sentences=sampled_query, vector_size=100, window=5, min_count=1, workers=4
+    )
+    passage_model = Word2Vec(
+        sentences=sampled_passage, vector_size=100, window=5, min_count=1, workers=4
+    )
+    # average embedding
+    query_ae = average_embedding(model=query_model, sentences=sampled_query)
+    passage_ae = average_embedding(model=passage_model, sentences=sampled_passage)
+    # create new pd.dataFrame
+    res_df = pd.concat(
+        [
+            sampled_df['index'],
+            sampled_df['qid'],
+            sampled_df['pid'],
+            pd.DataFrame(
+                list(zip(query_ae, passage_ae)), columns=['query_ae', 'passage_ae']
+            ),
+            sampled_df['relevancy'],
+        ],
+        axis=1,
+    )
+    if save_name:
+        res_df.to_csv(f'input_df_{save_name}.csv')
+    return res_df
 
 
 def subsampling(
@@ -99,3 +150,12 @@ def average_embedding(model, sentences):
         else:
             res.append(np.zeros(model.vector_size))
     return res
+
+
+if __name__ == '__main__':
+
+    train_data = load_document(
+        '/Users/ling/MyDocuments/COMP0084/0084_CW2/train_data.tsv', names=None
+    )
+
+    train_processed_df = text_preprocess(train_data, save_name='train')
