@@ -73,6 +73,29 @@ def subsampling(
         sampled_df.to_csv(f'{seed}_sampled.csv')
     return sampled_df
 
-    def _negative_sampling():
-        """negative sampling"""
-        pass
+
+def average_embedding(model, sentences):
+    """average embedding for a list of tokens
+
+    Parameters
+    ----------
+    model : Word2Vec model
+        _description_
+    sentences : list
+        processed query/passage
+
+    Returns
+    -------
+    np.array
+        average embedding for a list of tokens
+    """
+    res = []
+    for i in sentences:
+        # not empty
+        if i:
+            words_vectors = model.wv[i]
+            res.append(np.mean(words_vectors, axis=0))
+        # empty:
+        else:
+            res.append(np.zeros(model.vector_size))
+    return res
