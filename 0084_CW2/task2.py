@@ -33,7 +33,7 @@ def text_preprocess(
     Returns
     -------
     pd.DataFrame
-        embedding dataset
+        the whole embedding dataset with columns []
     """
     # sample: subsample
     print('Estimated Time: about 3 mins on M1 Pro')
@@ -43,9 +43,13 @@ def text_preprocess(
     else:
         sampled_df = data.reset_index(drop=False)
     # tokenisation of query and passage text
-    sampled_query = sampled_df['queries'].apply(tokenisation, remove=True)
-    sampled_passage = sampled_df['passage'].apply(tokenisation, remove=True)
+    print("Start tokenisation ...")
+    tqdm.pandas(desc='Tokenisation(1/2) ...')
+    sampled_query = sampled_df['queries'].progress_apply(tokenisation, remove=True)
+    tqdm.pandas(desc='Tokenisation(2/2) ...')
+    sampled_passage = sampled_df['passage'].progress_apply(tokenisation, remove=True)
     # build model
+    print("Start building model ...")
     query_model = Word2Vec(
         sentences=sampled_query, vector_size=100, window=5, min_count=1, workers=4
     )
@@ -53,6 +57,7 @@ def text_preprocess(
         sentences=sampled_passage, vector_size=100, window=5, min_count=1, workers=4
     )
     # average embedding
+    print("Start embedding ...")
     query_ae = average_embedding(model=query_model, sentences=sampled_query)
     passage_ae = average_embedding(model=passage_model, sentences=sampled_passage)
     # create new pd.dataFrame
@@ -116,7 +121,6 @@ def subsampling(
     else:
         # works as  filename
         seed = 'None'
-    print("Sarting sampling ...")
     # split positive and negative samples. sorted for iteration
     rel_df, irrel_df = raw_df[raw_df['relevancy'] == 1], raw_df[
         raw_df['relevancy'] == 0
@@ -159,11 +163,11 @@ def average_embedding(model, sentences):
 
     Returns
     -------
-    np.array
-        average embedding for a list of tokens
+    list
+        average embeddings of listx of tokens
     """
     res = []
-    for i in sentences:
+    for i in tqdm(sentences, desc="Average Embedding ..."):
         # not empty
         if i:
             words_vectors = model.wv[i]
@@ -175,9 +179,22 @@ def average_embedding(model, sentences):
 
 
 if __name__ == '__main__':
-
+    '''process and save to .npy files
     train_data = load_document(
         '/Users/ling/MyDocuments/COMP0084/0084_CW2/train_data.tsv', names=None
     )
+    text_preprocess(train_data, save_name='train')
 
-    train_processed_df = text_preprocess(train_data, save_name='train')
+    val_data = load_document(
+        '/Users/ling/MyDocuments/COMP0084/0084_CW2/validation_data.tsv', names=None
+    )
+    text_preprocess(val_data, save_name='val', do_subsample=False)
+    '''
+
+    # load from .npy file
+    # intercept 1 + embedding 200 + label 1
+    # shape = (95874, 202)
+    Xy_train = np.load('input_df_train_sub.npy')
+    # shape = (1103039, 202)
+    Xy_val = np.load('input_df_val_nosub.npy')
+    pass
