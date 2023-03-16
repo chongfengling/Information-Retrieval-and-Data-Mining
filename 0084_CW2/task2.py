@@ -7,13 +7,153 @@ import numpy as np
 
 
 class LogisticRegression:
-    def __init__(self) -> None:
-        pass
+    def __init__(
+        self,
+        lr: float = 0.001,
+        batch_size: int = 5000,
+        tol: float = 0.0001,
+        # max_iter: int = 10000,
+        num_epochs: int = 100,
+    ) -> None:
+        self.lr = lr
+        self.batch_size = batch_size
+        self.tol = tol
+        # self.max_iter = max_iter
+        self.num_epochs = num_epochs
+        self.weights = None
+        self.train_loss_lst = []
+        self.val_loss_lst = []
 
-    def fit():
-        pass
+    def fit(self, X_train, y_train, X_val, y_val):
+        m_train, n = X_train.shape
+        # self.weights = np.ones(n) * 0.5
+        self.weights = np.zeros(n)
+        # self.weights = np.random.normal(0, 1, size=n)
+        # initial loss is inf
+        pre_loss = 10e10
+        # epoch
+        epoch = 0
+        # early stop when there are no improvement of val loss in three continuing epochs
+        no_improvement = 0
+        while epoch < self.num_epochs:
+            print(f'current epochs = {epoch}')
+            # for each epoch, fits train data and computes loss
+            index_shuffled = np.random.permutation(m_train)
+            X_train_shuffled = X_train[index_shuffled, :]
+            y_train_shuffled = y_train[index_shuffled]
+            for i in range(0, m_train, self.batch_size):
+                # if not divisible in the final batch, return all remaining
+                X_train_batch = X_train_shuffled[i : min(i + self.batch_size, m_train)]
+                y_train_batch = y_train_shuffled[i : min(i + self.batch_size, m_train)]
+                # prediction for train data
+                y_train_batch_pred = self.predict_prob(X_train_batch)
+                # compute gradient
+                grad = self._gradient(
+                    y_true=y_train_batch,
+                    y_pred=y_train_batch_pred,
+                    X_train=X_train_batch,
+                )
+                # update the weights in every batch
+                self.weights -= grad * self.lr
+            # compute predictions and train/val loss in every epoch
+            y_train_shuffled_pred = self.predict_prob(X_train_shuffled)
+            y_val_pred = self.predict_prob(X_val)
+            train_loss = self._compute_loss(
+                y_true=y_train_shuffled, y_pred=y_train_shuffled_pred
+            )
+            val_loss = self._compute_loss(y_true=y_val, y_pred=y_val_pred)
+            # record the training history
+            self.train_loss_lst.append(train_loss)
+            self.val_loss_lst.append(val_loss)
+            # print info
+            print(f'train loss = {train_loss}, validation loss = {val_loss}.')
+            # early stop criterion
+            if pre_loss - val_loss < self.tol:
+                no_improvement += 1
+            if no_improvement >= 4:
+                break
+            pre_loss = val_loss
+            # next epoch
+            epoch += 1
 
-    def predict():
+    def predict_prob(self, X: np.array) -> np.array:
+        """return probability
+
+        Parameters
+        ----------
+        X : np.array
+            shape=(num_data, num_feature)
+
+        Returns
+        -------
+        np.array
+            shape=(num_data,)
+        """
+        return self._sigmoid(np.dot(X, self.weights))
+
+    def predict(self, X: np.array, threshold: float = 0.5) -> list:
+        """return estimated label (0 or 1)
+
+        Parameters
+        ----------
+        X : np.array
+            shape=(num_data, num_feature)
+        threshold : float, optional
+            _description_, by default 0.5
+
+        Returns
+        -------
+        list
+            len=num_data
+        """
+        y_pred = self.predict_prob(X)
+        return list(map(int, y_pred >= threshold))
+
+    def _sigmoid(self, x: np.array)->np.array:
+        return 1 / (1 + np.exp(-x))
+
+    def _gradient(self, y_true: np.array, y_pred: np.array, X_train: np.array)->np.array:
+        """gradients of cross-entropy loss
+
+        Parameters
+        ----------
+        y_true : np.array
+            _description_
+        y_pred : np.array
+            _description_
+        X_train : np.array
+            _description_
+
+        Returns
+        -------
+        np.array
+            _description_
+        """
+        n = X_train.shape[0]
+        return -(1 / n) * np.dot(np.transpose(X_train), (y_true - y_pred))
+
+    def _compute_loss(self, y_true: np.array, y_pred: np.array) -> float:
+        """cross-entropy loss
+
+        Parameters
+        ----------
+        y_true : np.array
+            true label
+        y_pred : np.array
+            predicted probability
+
+        Returns
+        -------
+        float
+            loss
+        """
+        n = len(y_true)
+        return -(1 / n) * np.sum(
+            np.multiply(y_true, np.log(y_pred))
+            + np.multiply((1 - y_true), np.log(1 - y_pred))
+        )
+
+    def matric(self):
         pass
 
 
@@ -197,4 +337,11 @@ if __name__ == '__main__':
     Xy_train = np.load('input_df_train_sub.npy')
     # shape = (1103039, 202)
     Xy_val = np.load('input_df_val_nosub.npy')
+
+    X_train, y_train = Xy_train[:, :-1], Xy_train[:, -1]
+    X_val, y_val = Xy_val[:, :-1], Xy_val[:, -1]
+
+    LR_model = LogisticRegression()
+    LR_model.fit(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val)
+    # LR_model.predict_prob(X_val)
     pass
