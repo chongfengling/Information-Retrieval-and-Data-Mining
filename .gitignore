@@ -29,3 +29,4 @@
 0084_CW2/.ipynb_checkpoints/*
 !0084_CW2/bm25_ordered_top*.csv
 !0084_CW2/bm25_raw.csv
+*.npy

@@ -54,14 +54,28 @@ def text_preprocess(data:pd.DataFrame, save_name: str = None):
             sampled_df['qid'],
             sampled_df['pid'],
             pd.DataFrame(
-                list(zip(query_ae, passage_ae)), columns=['query_ae', 'passage_ae']
+                list(zip([1] * len(query_ae), query_ae, passage_ae)),
+                columns=['intercept', 'query_ae', 'passage_ae'],
             ),
             sampled_df['relevancy'],
         ],
         axis=1,
     )
     if save_name:
-        res_df.to_csv(f'input_df_{save_name}.csv')
+        # difficult to load (str to array)
+        # res_df.to_csv(f'input_df_{save_name}.csv')
+
+        # save X, y into a .npy file
+        X = np.asarray(
+            res_df.apply(
+                lambda x: np.hstack((x['intercept'], x['query_ae'], x['passage_ae'])),
+                axis=1,
+            ).values.tolist()
+        )
+        y = np.asarray(res_df['relevancy']).reshape(-1, 1)
+        X_y = np.hstack((X, y))
+        np.save(f'input_df_{save_name}.npy', X_y)
+
     return res_df
 
 
