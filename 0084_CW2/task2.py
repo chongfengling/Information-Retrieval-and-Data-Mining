@@ -17,15 +17,18 @@ class LogisticRegression:
         pass
 
 
-def text_preprocess(data:pd.DataFrame, save_name: str = None):
+def text_preprocess(
+    data: pd.DataFrame, save_name: str = None, do_subsample: bool = True
+) -> pd.DataFrame:
     """from texts to vectors
 
     Parameters
-    ----------
     data : pd.DataFrame
         dataset
     save_name : str, optional
         save or not, by default None
+    do_subsample: bool, optional
+        subsample for train dataset only
 
     Returns
     -------
@@ -33,7 +36,12 @@ def text_preprocess(data:pd.DataFrame, save_name: str = None):
         embedding dataset
     """
     # sample: subsample
-    sampled_df = subsampling(data).reset_index(drop=False)
+    print('Estimated Time: about 3 mins on M1 Pro')
+    if do_subsample:
+        print("Start sampling ...")
+        sampled_df = subsampling(data).reset_index(drop=False)
+    else:
+        sampled_df = data.reset_index(drop=False)
     # tokenisation of query and passage text
     sampled_query = sampled_df['queries'].apply(tokenisation, remove=True)
     sampled_passage = sampled_df['passage'].apply(tokenisation, remove=True)
