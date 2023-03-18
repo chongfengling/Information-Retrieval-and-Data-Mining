@@ -226,7 +226,12 @@ def text_preprocess(
             ).values.tolist()
         )
         y = np.asarray(res_df['relevancy']).reshape(-1, 1)
-        X_y = np.hstack((X, y))
+        # X_y = np.hstack((X, y))
+        # save qid, pid for later use
+        qid, pid = np.asarray(res_df['qid']).reshape(-1, 1), np.asarray(
+            res_df['pid']
+        ).reshape(-1, 1)
+        X_y = np.hstack((qid, pid, X, y))
         np.save(f'input_df_{save_name}.npy', X_y)
 
     return res_df
