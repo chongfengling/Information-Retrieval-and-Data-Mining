@@ -336,6 +336,13 @@ if __name__ == '__main__':
     text_preprocess(val_data, save_name='val', do_subsample=False)
     '''
 
+    test_data = load_document(
+        '/Users/ling/MyDocuments/COMP0084/0084_CW2/candidate_passages_top1000.tsv', names=['qid', 'pid', 'queries', 'passage']
+    )
+    test_data['relevancy'] = [-1] * len(test_data['qid'])
+    text_preprocess(test_data, save_name='test', do_subsample=False)
+    # '''
+
     # load from .npy file
     # intercept 1 + embedding 200 + label 1
     # shape = (95874, 202)
