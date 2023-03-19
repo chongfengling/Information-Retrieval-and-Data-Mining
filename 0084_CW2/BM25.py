@@ -275,6 +275,8 @@ def select_top_passages(
     now = datetime.datetime.now()
     H_M = now.strftime('%H_%M')
 
+    # sort by score for all queries
+    df_raw = df_raw.sort_values(by=rank_col, ascending=False)
     df_new = (
         df_raw.groupby(group_col)
         .apply(lambda x: x.nlargest(top_n, columns=rank_col))
