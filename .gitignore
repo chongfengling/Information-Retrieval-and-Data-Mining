@@ -4,6 +4,7 @@
 *.synctex.gz
 *.toc
 *.out
+.sty
 0084_CW1/candidate-passages-top1000.tsv
 0084_CW1/passage-collection.txt
 0084_CW1/test-queries.tsv
