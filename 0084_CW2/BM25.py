@@ -70,7 +70,7 @@ def text_preprocess(astr, remove=False, save_txt=False):
     if remove:
         if save_txt:
             np.savetxt(
-                '0084_CW2/terms_removed.txt',
+                'terms_removed.txt',
                 np.array(list(unique_words)),
                 delimiter='\n',
                 fmt="%s",
@@ -103,8 +103,8 @@ def load_terms(file_path='terms_kept.txt'):
     return terms
 
 
-def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
-    """calculate relative score of a query q and a document d in a document collection D based on BM25 model
+def BM25(document: pd.DataFrame, terms: list, k1, k2, b):
+    """calculate relative score of a query q and a document d in a document collection D based on BM25 model. Order in queries is not important in CW2.
     score = sum_(term i in q ) (log(((ri + 0.5) / (R - ri + 0.5)) / ((ni - ri + 0.5) / (N - ni - R + ri + 0.5))) * (((k1 + 1) * fi ) / (K + fi)) * (((k2 + 1) * qfi) / (k2 + qfi)))
 
     Q : _type_
@@ -200,7 +200,7 @@ def BM25(document: pd.DataFrame, query: pd.DataFrame, terms: list, k1, k2, b):
     df_score = pd.DataFrame(
         tmp_all, columns=['qid', 'pid', 'score', 'relevancy'], dtype=float
     ).astype(dtype={'qid': int, 'pid': int, 'score': float, 'relevancy': float})
-    select_top_passages(df_raw=df_score, filename='bm25', save_raw=True, save_top=True)
+    select_top_passages(df_raw=df_score, filename='bm25', save_raw=True, save_top=False)
 
 
 def K_value(k1, b, dl, avdl):
@@ -265,7 +265,7 @@ def select_top_passages(
     save_raw: bool = True,
     save_top: bool = True,
     filename: str = 'None',
-    top_n: int = 100,
+    top_n: int = 1000,
     rank_col: str = 'score',
     group_col: str = 'qid',
 ):
@@ -285,11 +285,11 @@ def select_top_passages(
 
     if save_raw:
         df_raw.to_csv(
-            f'0084_CW2/{filename}_raw_top{top_n}_{H_M}.csv', header=False, index=False
+            f'{filename}_raw_top{top_n}.csv', header=False, index=False
         )
     if save_top:
         df_new.to_csv(
-            f'0084_CW2/{filename}_ordered_top{top_n}_{H_M}.csv',
+            f'{filename}_ordered_top{top_n}.csv',
             header=False,
             index=False,
         )
@@ -297,31 +297,38 @@ def select_top_passages(
 
 
 if __name__ == '__main__':
-    ''' BM25 model
+    # ''' BM25 model
     nltk.download('punkt')
     # run BM25 model
+    f_passage_collection = 'passage_collection_new.txt'
+    f_val_data = 'validation_data.tsv'
+    # return terms based on the passage collection
     with open(
-        '/Users/ling/MyDocuments/COMP0084/0084_CW1/passage-collection.txt', 'r'
+        f_passage_collection, 'r'
     ) as f:
         astr = '.'.join([line.rstrip() for line in f])
-
     terms = text_preprocess(astr, remove=True, save_txt=True)
-    candidates = load_document(
-        '/Users/ling/MyDocuments/COMP0084/0084_CW2/candidate_passages_top1000.tsv'
-    )  # document collection
+    # load document collection
     candidates = pd.read_csv(
-        '/Users/ling/MyDocuments/COMP0084/0084_CW2/validation_data.tsv',
+        f_val_data,
         sep='\t'
     )
-    '''
-    # apply the previous result of BM25 model
-    queries = load_document(
-        '/Users/ling/MyDocuments/COMP0084/0084_CW2/test-queries.tsv',
-        names=['qid', 'queries'],
-    )  # query    collection Q
+    # return score of BM25 of all passages
+    # save result in the file 'bm25_raw_top1000.csv'
+    print('run BM25 model')
+    BM25(document=candidates, terms=terms, k1=1.2, k2=100, b=0.75)
+    
+    # return top n passages for each query
+    print('select top n passages')
     df_score = pd.read_csv(
-        '0084_CW2/bm25_raw.csv', names=['qid', 'pid', 'score', 'relevancy']
+        'bm25_raw_top1000.csv', names=['qid', 'pid', 'score', 'relevancy']
+    )
+    select_top_passages(
+        df_raw=df_score, filename='bm25', save_raw=False, top_n=3, save_top=True
     )
     select_top_passages(
         df_raw=df_score, filename='bm25', save_raw=False, top_n=100, save_top=True
+    )
+    select_top_passages(
+        df_raw=df_score, filename='bm25', save_raw=False, top_n=10, save_top=True
     )

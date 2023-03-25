@@ -73,7 +73,7 @@ def mNDCG(BM25_topN_df: pd.DataFrame, top_n: int):
         _description_
     """
     # load the whole validation data
-    val_df = pd.read_csv('0084_CW2/validation_data.tsv', sep='\t')
+    val_df = pd.read_csv('validation_data.tsv', sep='\t')
     # delete unused save memory
     del val_df['queries']
     del val_df['passage']
@@ -99,17 +99,25 @@ def mNDCG(BM25_topN_df: pd.DataFrame, top_n: int):
 
 if __name__ == '__main__':
     BM25_top3_df = pd.read_csv(
-        '0084_CW2/bm25_ordered_top3.csv', names=['qid', 'pid', 'score', 'relevancy']
+        'bm25_ordered_top3.csv', names=['qid', 'pid', 'score', 'relevancy']
     )
     BM25_top10_df = pd.read_csv(
-        '0084_CW2/bm25_ordered_top10.csv', names=['qid', 'pid', 'score', 'relevancy']
+        'bm25_ordered_top10.csv', names=['qid', 'pid', 'score', 'relevancy']
     )
     BM25_top100_df = pd.read_csv(
-        '0084_CW2/bm25_ordered_top100.csv', names=['qid', 'pid', 'score', 'relevancy']
+        'bm25_ordered_top100.csv', names=['qid', 'pid', 'score', 'relevancy']
     )
 
-    # print(mAP(BM25_top100_df))  # 0.23475818881692506
+    # mAP (top 003): 0.18307200929152148
+    # mAP (top 010): 0.22505357834190584
+    # mAP (top 100): 0.23671435214752098
+    print(f'mAP (top 003): {mAP(BM25_top3_df)}')
+    print(f'mAP (top 010): {mAP(BM25_top10_df)}')
+    print(f'mAP (top 100): {mAP(BM25_top100_df)}')
 
-    print(mNDCG(BM25_top3_df, top_n=3))  # top003 = 0.19853070832150987
-    print(mNDCG(BM25_top10_df, top_n=10))  # top010 = 0.28584393775886474
-    print(mNDCG(BM25_top100_df, top_n=100))  # top100 = 0.35337428212970406
+    # mNDCG (top 003): 0.20079147890684043
+    # mNDCG (top 010): 0.28709180027087905
+    # mNDCG (top 100): 0.3548810719954443
+    print(f'mNDCG (top 003): {mNDCG(BM25_top3_df, top_n=3)}')
+    print(f'mNDCG (top 010): {mNDCG(BM25_top10_df, top_n=10)}')
+    print(f'mNDCG (top 100): {mNDCG(BM25_top100_df, top_n=100)}')

@@ -28,5 +28,5 @@
 0084_CW2/__pycache__/*
 0084_CW2/.ipynb_checkpoints/*
 !0084_CW2/bm25_ordered_top*.csv
-!0084_CW2/bm25_raw.csv
+!0084_CW2/bm25_raw_top1000.csv
 *.npy
