@@ -4,6 +4,8 @@ import nltk
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from task1 import mAP, mNDCG
 
 
 class LogisticRegression:
@@ -11,20 +13,20 @@ class LogisticRegression:
         self,
         lr: float = 0.001,
         batch_size: int = 5000,
-        tol: float = 0.0001,
-        # max_iter: int = 10000,
+        tol: float = 0.001,
         num_epochs: int = 100,
     ) -> None:
         self.lr = lr
         self.batch_size = batch_size
         self.tol = tol
-        # self.max_iter = max_iter
         self.num_epochs = num_epochs
         self.weights = None
         self.train_loss_lst = []
-        self.val_loss_lst = []
+        # self.val_loss_lst = []
 
-    def fit(self, X_train, y_train, X_val, y_val):
+    def fit(
+        self, X_train, y_train, X_val, y_val, qid_train, pid_train, qid_val, pid_val
+    ):
         m_train, n = X_train.shape
         # self.weights = np.ones(n) * 0.5
         self.weights = np.zeros(n)
@@ -64,7 +66,7 @@ class LogisticRegression:
             val_loss = self._compute_loss(y_true=y_val, y_pred=y_val_pred)
             # record the training history
             self.train_loss_lst.append(train_loss)
-            self.val_loss_lst.append(val_loss)
+            # self.val_loss_lst.append(val_loss)
             # print info
             print(f'train loss = {train_loss}, validation loss = {val_loss}.')
             # early stop criterion
@@ -75,6 +77,10 @@ class LogisticRegression:
             pre_loss = val_loss
             # next epoch
             epoch += 1
+
+        score_val = self.predict_prob(X_val)
+        mAP_val, mNDCG_val = self.matric(qid_val, pid_val, score_val, y_val)
+        print(f'(mAP_val, mNDCG_val) = {mAP_val, mNDCG_val}')
 
     def predict_prob(self, X: np.array) -> np.array:
         """return probability
@@ -109,10 +115,12 @@ class LogisticRegression:
         y_pred = self.predict_prob(X)
         return list(map(int, y_pred >= threshold))
 
-    def _sigmoid(self, x: np.array)->np.array:
+    def _sigmoid(self, x: np.array) -> np.array:
         return 1 / (1 + np.exp(-x))
 
-    def _gradient(self, y_true: np.array, y_pred: np.array, X_train: np.array)->np.array:
+    def _gradient(
+        self, y_true: np.array, y_pred: np.array, X_train: np.array
+    ) -> np.array:
         """gradients of cross-entropy loss
 
         Parameters
@@ -153,8 +161,14 @@ class LogisticRegression:
             + np.multiply((1 - y_true), np.log(1 - y_pred))
         )
 
-    def matric(self):
-        pass
+    def matric(self, qid, pid, score, relevancy, top_n=100):
+        # calculate mAP and mNDCG
+        arrs = np.column_stack((qid, pid, score, relevancy))
+        df = pd.DataFrame(arrs, columns=['qid', 'pid', 'score', 'relevancy'])
+
+        mean_AP = mAP(df=df)
+        mean_NDCG = mNDCG(BM25_topN_df=df, top_n=top_n)
+        return mean_AP, mean_NDCG
 
 
 def text_preprocess(
@@ -176,9 +190,9 @@ def text_preprocess(
         the whole embedding dataset with columns []
     """
     # sample: subsample
-    print('Estimated Time: about 3 mins on M1 Pro')
+    # print('Processing data ...')
     if do_subsample:
-        print("Start sampling ...")
+        print("Sampling data ...")
         sampled_df = subsampling(data).reset_index(drop=False)
     else:
         sampled_df = data.reset_index(drop=False)
@@ -214,6 +228,7 @@ def text_preprocess(
         ],
         axis=1,
     )
+    res_df = res_df.sort_values(by=['qid']).reset_index(drop=True)
     if save_name:
         # difficult to load (str to array)
         # res_df.to_csv(f'input_df_{save_name}.csv')
@@ -323,37 +338,117 @@ def average_embedding(model, sentences):
     return res
 
 
-if __name__ == '__main__':
-    '''process and save to .npy files
-    train_data = load_document(
-        '/Users/ling/MyDocuments/COMP0084/0084_CW2/train_data.tsv', names=None
+def pred_test(model):
+    # load and predict
+    Xy_test = np.load('input_df_test.npy')
+    X_test, _ = Xy_test[:, 2:-1], Xy_test[:, -1]
+    qid_test, pid_test = Xy_test[:, 0], Xy_test[:, 1]
+    y_pred = model.predict_prob(X_test)
+    # save all results
+    res_df = pd.DataFrame(
+        list(zip(qid_test, pid_test, y_pred)),
+        columns=['qid', 'pid', 'score'],
     )
-    text_preprocess(train_data, save_name='train')
+    # save top 100 results
+    res_selected_df = select_top_passages(
+        res_df,
+        save_raw=False,
+        save_top=False,
+        top_n=100,
+        rank_col='score',
+        group_col='qid',
+    )
+    # add rank column
+    res_selected_df['rank'] = res_selected_df.groupby('qid')['score'].rank(
+        ascending=False
+    )
+    # add more columns
+    LR_df = pd.concat(
+        [
+            res_selected_df['qid'],
+            pd.DataFrame(list(zip(['A2'] * len(res_selected_df))), columns=['A2']),
+            res_selected_df['pid'],
+            res_selected_df['rank'],
+            res_selected_df['score'],
+            pd.DataFrame(list(zip(['LR'] * len(res_selected_df))), columns=['A2']),
+        ],
+        axis=1,
+    )
+    # specify data type (float to int)
+    LR_df = LR_df.astype({'qid': 'int32', 'pid': 'int32', 'rank': 'int32'})
+    # load qid order
+    qid_order_lst = pd.read_csv('test-queries.tsv', sep='\t', names=['qid', 'query'])[
+        'qid'
+    ].values.tolist()
+    # only keep the qid in test-queries
+    LR_df = LR_df[LR_df['qid'].isin(qid_order_lst)]
+    # sort by qid order and rank
+    cat_qid = pd.Categorical(LR_df['qid'], categories=qid_order_lst, ordered=True)
+    LR_df['qid'] = cat_qid
+    LR_df = LR_df.sort_values(['qid', 'rank'])
+    # save to LR.csv
+    LR_df.to_csv('LR.txt', index=False, header=False, sep='\t')
 
+
+if __name__ == '__main__':
+    # process and save to .npy files
+    print('Processing train data ...')
+    train_data = load_document(
+        'train_data.tsv', names=None
+    )
+    text_preprocess(train_data, save_name='train', do_subsample=True)
+    print('Processing validation data ...')
     val_data = load_document(
-        '/Users/ling/MyDocuments/COMP0084/0084_CW2/validation_data.tsv', names=None
+        'validation_data.tsv', names=None
     )
     text_preprocess(val_data, save_name='val', do_subsample=False)
-    '''
-
+    print('Processing test data ...')
     test_data = load_document(
-        '/Users/ling/MyDocuments/COMP0084/0084_CW2/candidate_passages_top1000.tsv', names=['qid', 'pid', 'queries', 'passage']
+        'candidate_passages_top1000.tsv', names=['qid', 'pid', 'queries', 'passage']
     )
     test_data['relevancy'] = [-1] * len(test_data['qid'])
     text_preprocess(test_data, save_name='test', do_subsample=False)
-    # '''
+    
 
     # load from .npy file
-    # intercept 1 + embedding 200 + label 1
-    # shape = (95874, 202)
-    Xy_train = np.load('input_df_train_sub.npy')
-    # shape = (1103039, 202)
-    Xy_val = np.load('input_df_val_nosub.npy')
+    # qid 1 + pid 1 + intercept 1 + embedding 200 + label 1
+    # shape = (95874, 204)
+    Xy_train = np.load('input_df_train.npy')
+    # shape = (1103039, 204)
+    Xy_val = np.load('input_df_val.npy')
 
-    X_train, y_train = Xy_train[:, :-1], Xy_train[:, -1]
-    X_val, y_val = Xy_val[:, :-1], Xy_val[:, -1]
+    X_train, y_train = Xy_train[:, 2:-1], Xy_train[:, -1]
+    qid_train, pid_train = Xy_train[:, 0], Xy_train[:, 1]
+    X_val, y_val = Xy_val[:, 2:-1], Xy_val[:, -1]
+    qid_val, pid_val = Xy_val[:, 0], Xy_val[:, 1]
 
-    LR_model = LogisticRegression()
-    LR_model.fit(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val)
-    # LR_model.predict_prob(X_val)
-    pass
+    # lr_lst = [0.01, 0.005, 0.001, 0.0005, 0.0001]
+    lr_lst = [0.005]
+    train_loss_lst = []
+    for lr in lr_lst:
+        LR_model = LogisticRegression(num_epochs=1000, lr=lr, batch_size=5000, tol=1e-8)
+        LR_model.fit(
+            X_train=X_train,
+            y_train=y_train,
+            X_val=X_val,
+            y_val=y_val,
+            qid_train=qid_train,
+            pid_train=pid_train,
+            qid_val=qid_val,
+            pid_val=pid_val,
+        )
+        train_loss_lst.append(LR_model.train_loss_lst)
+    # (mAP_val, mNDCG_val) = (0.009082884016363476, 0.12541414087442138)
+    # plot the loss curve
+    fig, ax = plt.subplots()
+    for i, lst in enumerate(train_loss_lst):
+        x = range(len(lst))
+        ax.plot(x, lst, label=f'lr={lr_lst[i]}')
+    plt.legend()
+    ax.set_xlabel('epoch')
+    ax.set_ylabel('loss')
+    ax.set_title('train loss curve')
+    plt.show()
+
+    # predict test data
+    pred_test(LR_model)
