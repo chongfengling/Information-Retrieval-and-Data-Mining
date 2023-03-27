@@ -6,8 +6,7 @@ from task1 import mAP, mNDCG
 
 
 def feature_process(file_path):
-    """add new features
-    """
+    """add new features"""
     # shape = (n, 204)
     array = np.load(file_path)
     qid, pid = array[:, 0], array[:, 1]
