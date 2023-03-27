@@ -338,12 +338,18 @@ def average_embedding(model, sentences):
     return res
 
 
-def pred_test(model):
+def pred_test(model, model_type, X_test=None, qid_test=None, pid_test=None):
     # load and predict
-    Xy_test = np.load('input_df_test.npy')
-    X_test, _ = Xy_test[:, 2:-1], Xy_test[:, -1]
-    qid_test, pid_test = Xy_test[:, 0], Xy_test[:, 1]
-    y_pred = model.predict_prob(X_test)
+    if model_type == 'LR':
+        # load and predict
+        Xy_test = np.load('input_df_test.npy')
+        X_test, _ = Xy_test[:, 2:-1], Xy_test[:, -1]
+        qid_test, pid_test = Xy_test[:, 0], Xy_test[:, 1]
+        y_pred = model.predict_prob(X_test)
+    elif model_type == 'LM':
+        y_pred = model.predict(X_test)
+    elif model_type == 'NN':
+        pass
     # save all results
     res_df = pd.DataFrame(
         list(zip(qid_test, pid_test, y_pred)),
@@ -370,7 +376,7 @@ def pred_test(model):
             res_selected_df['pid'],
             res_selected_df['rank'],
             res_selected_df['score'],
-            pd.DataFrame(list(zip(['LR'] * len(res_selected_df))), columns=['A2']),
+            pd.DataFrame(list(zip([model_type] * len(res_selected_df))), columns=['Model_type']),
         ],
         axis=1,
     )
@@ -387,11 +393,13 @@ def pred_test(model):
     LR_df['qid'] = cat_qid
     LR_df = LR_df.sort_values(['qid', 'rank'])
     # save to LR.csv
-    LR_df.to_csv('LR.txt', index=False, header=False, sep='\t')
+    LR_df.to_csv(f'{model_type}.txt', index=False, header=False, sep='\t')
 
 
 if __name__ == '__main__':
     # process and save to .npy files
+    # ! run it to create data for task 2-4
+    '''
     print('Processing train data ...')
     train_data = load_document(
         'train_data.tsv', names=None
@@ -408,7 +416,7 @@ if __name__ == '__main__':
     )
     test_data['relevancy'] = [-1] * len(test_data['qid'])
     text_preprocess(test_data, save_name='test', do_subsample=False)
-    
+    '''
 
     # load from .npy file
     # qid 1 + pid 1 + intercept 1 + embedding 200 + label 1
@@ -421,8 +429,9 @@ if __name__ == '__main__':
     qid_train, pid_train = Xy_train[:, 0], Xy_train[:, 1]
     X_val, y_val = Xy_val[:, 2:-1], Xy_val[:, -1]
     qid_val, pid_val = Xy_val[:, 0], Xy_val[:, 1]
-
+    # research how learning rate effects the model
     # lr_lst = [0.01, 0.005, 0.001, 0.0005, 0.0001]
+    # choose learning rate=0.005
     lr_lst = [0.005]
     train_loss_lst = []
     for lr in lr_lst:
@@ -451,4 +460,4 @@ if __name__ == '__main__':
     plt.show()
 
     # predict test data
-    pred_test(LR_model)
+    pred_test(LR_model, 'LR')
