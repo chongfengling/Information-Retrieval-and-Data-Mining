@@ -1,0 +1,64 @@
+\section{Task 1: Evaluating Retrieval Quality}
+
+\subsection{Text Processing}
+We preprocess passages/queries in two files: \textsl{validation\_data.tsv} and \textsl{train\_data.tsv} by following steps:
+\begin{enumerate}
+    \item remove url.
+    \item lower characters.
+    \item remove non alpha characters.
+    \item tokenization by Python package NLTK.
+\end{enumerate}
+\subsection{BM25 Model}
+BM25 Model with parameters implemented in the Coursework 1 is used to retrieval the top passages for each query. Here we retrieval top 3, 10 and 100 passages from 1000 passages. The complete result of BM25 model is in \textsl{bm25\_raw\_top1000.tsv}, while we retrieval top 3 passages for each query in \textsl{bm25\_ordered\_top3.tsv}, top 10 passages in \textsl{bm25\_ordered\_top10.tsv} and top 100 passages in \textsl{bm25\_ordered\_top100.tsv}.
+\subsection{Metrics}
+
+\subsubsection{Average Precision (AP)}
+AP is the average precision of relevant passages for a query.
+\begin{equation}
+    A P=\frac{\sum_{k=1}^n P(k) \times r e l(k)}{N}
+\end{equation}
+N: number of relevant passages for the query.\\
+k: rank of the passage.
+\subsubsection{Mean AP}
+Mean AP is the average of AP over all queries.
+\begin{equation}
+    m A P=\frac{\sum_{q=1}^{N_q} A P_q}{N_q}
+\end{equation}
+$q$: the $q_{th}$ query
+\subsubsection{Discounter Cumulative Gain (DCG)}
+DCG is the total gain accumulated at a particular rank p.
+\begin{equation}
+    D C G_q=\sum_{i=1}^q \frac{2^{r e l_i}-1}{\log _2(i+1)}
+\end{equation}
+$p$: particular ranking length\\
+$i$: the ith passage\\
+$rel_i$: relevance score
+\subsubsection{Normalized DCG (NDCG)}
+Normalizes DCG against the best possible DCG result (the  perfect ranking) for a query.
+\begin{equation}
+    N D C G_q=\frac{D C G_q}{o p t D C G_q}
+\end{equation}
+\subsubsection{Mean NDCG}
+Mean NDCG is the average of NDCG over all queries.
+\begin{equation}
+    m NDCG=\frac{\sum_{q=1}^{N_q} N D C G_q}{N_q}
+\end{equation}
+$N_q$: number of queries\\
+The results of the metrics of BM25 model are in Table \ref{tab:bm25}.
+
+\begin{table}[ht]
+    \centering
+    \caption{Metrics of BM25 model}
+    \label{tab:bm25}
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        BM25 & Cutoff & mAP & mNDCG \\
+        \hline
+        Top 3 & 3 & 0.1830 & 0.2007 \\
+        \hline
+        Top 10 & 10 & 0.2250 & 0.2870 \\
+        \hline
+        Top 100 & 100 & 0.2367 & 0.3548 \\
+        \hline
+    \end{tabular}
+\end{table}

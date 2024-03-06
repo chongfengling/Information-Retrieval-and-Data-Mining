@@ -4,6 +4,7 @@
 *.synctex.gz
 *.toc
 *.out
+.sty
 0084_CW1/candidate-passages-top1000.tsv
 0084_CW1/passage-collection.txt
 0084_CW1/test-queries.tsv
@@ -18,3 +19,15 @@
 0084_CW1/submit/task4.py
 0084_CW1/COMP0084_CW1.pdf
 0084_CW1/*ACL Template/aseets/schematic.png
+
+0084_CW2/*ACL Template/
+0084_CW2/test-queries.tsv
+0084_CW2/IRDM2022_Coursework2.pdf
+0084_CW2/candidate_passages_top1000.tsv
+0084_CW2/validation_data.tsv
+0084_CW2/train_data.tsv
+0084_CW2/__pycache__/*
+0084_CW2/.ipynb_checkpoints/*
+!0084_CW2/bm25_ordered_top*.csv
+!0084_CW2/bm25_raw_top1000.csv
+*.npy

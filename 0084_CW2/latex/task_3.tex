@@ -1,0 +1,62 @@
+\section{Task 3: LambdaMART Model}
+\subsection{Model}
+Queries and passages is embeded in the same way as in Task 2. However, we replace the bias term with the relevance of the pair passage-query. The input vector is the same as in Task 2 (embedding vector with 201 dimensions) and the label is the relevance of pair passage-query, 0 or 1. The model is trained using the LambdaMART algorithm using some hyper-parameters.
+
+\subsection{Hyper-parameter Tuning}
+The objective of the model is \textsl{rank:ndcg} which use LambdaMART to perform list-wise ranking where Normalized Discounted Cumulative Gain (NDCG) is maximized. We use \textsl{gbtree} as the booster. The hyper-parameters are tuned using the validation set. The hyper-parameters are learning rate, number of gradient boosted trees and maximum tree depth for base learners. The metrics mAP and mNDCG of top 100 passages are used to evaluate the model. The grid search method is used to find the best hyper-parameters among the following values: learning rate = 0.0005, 0.001, 0.005, 0.01, 0.05; number of gradient boosted trees = 100, 200, 300; maximum tree depth = 5, 6, 7. The results are shown in Table \ref{tab:hyperparameter_tuning}. The hyper-parameters resulting in the highest mNDCG are learning rate = 0.005, number of gradient boosted trees = 300 and maximum tree depth = 5. The mAP and mNDCG of top 100 passages are 0.0149 and 0.0388 respectively. According to the metrics on the validation data, LambdaMART model with the hyper-parameters above is not as good as previous models.
+\begin{center}
+    \begin{tabular}{cccccc}
+    \hline
+    \textbf{No.} & \textbf{eta} & \textbf{depths} & \textbf{n\_ests} & \textbf{mAP} & \textbf{mNDCG} \\
+    \hline
+    0  & 0.0005 & 5 & 100 & 0.0113 & 0.0301 \\
+    1  & 0.0005 & 5 & 200 & 0.0106 & 0.0301 \\
+    2  & 0.0005 & 5 & 300 & 0.0095 & 0.0295 \\
+    3  & 0.0005 & 6 & 100 & 0.0096 & 0.0292 \\
+    4  & 0.0005 & 6 & 200 & 0.0080 & 0.0289 \\
+    5  & 0.0005 & 6 & 300 & 0.0093 & 0.0308 \\
+    6  & 0.0005 & 7 & 100 & 0.0111 & 0.0289 \\
+    7  & 0.0005 & 7 & 200 & 0.0108 & 0.0277 \\
+    8  & 0.0005 & 7 & 300 & 0.0102 & 0.0282 \\
+    9  & 0.0010 & 5 & 100 & 0.0104 & 0.0313 \\
+    10 & 0.0010 & 5 & 200 & 0.0114 & 0.0316 \\
+    11 & 0.0010 & 5 & 300 & 0.0130 & 0.0332 \\
+    12 & 0.0010 & 6 & 100 & 0.0095 & 0.0315 \\
+    13 & 0.0010 & 6 & 200 & 0.0112 & 0.0307 \\
+    14 & 0.0010 & 6 & 300 & 0.0085 & 0.0293 \\
+    15 & 0.0010 & 7 & 100 & 0.0128 & 0.0315 \\
+    16 & 0.0010 & 7 & 200 & 0.0116 & 0.0306 \\
+    17 & 0.0010 & 7 & 300 & 0.0105 & 0.0316 \\
+    18 & 0.0050 & 5 & 100 & 0.0103 & 0.0340 \\
+    19 & 0.0050 & 5 & 200 & 0.0122 & 0.0337 \\
+    \hline
+    20 & 0.0050 & 5 & 300 & 0.0149 & 0.0388 \\
+    \hline
+    21 & 0.0050 & 6 & 100 & 0.0127 & 0.0327 \\
+    22 & 0.0050 & 6 & 200 & 0.0111 & 0.0291 \\
+    23 & 0.0050 & 6 & 300 & 0.0115 & 0.0302 \\
+    24 & 0.0050 & 7 & 100 & 0.0086 & 0.0333 \\
+    25 & 0.0050 & 7 & 200 & 0.0100 & 0.0340 \\
+    26 & 0.0050 & 7 & 300 & 0.0111 & 0.0360 \\
+    27 & 0.0100 & 5 & 100 & 0.0096 & 0.0296 \\
+    28 & 0.0100 & 5 & 200 & 0.0148 & 0.0367 \\
+    29 & 0.0100 & 5 & 300 & 0.0139 & 0.0369 \\
+    30 & 0.0100 & 6 & 100 & 0.0074 & 0.0265 \\
+    31 & 0.0100 & 6 & 200 & 0.0095 & 0.0287 \\
+    32 & 0.0100 & 6 & 300 & 0.0099 & 0.0305 \\
+    33 & 0.0100 & 7 & 100 & 0.0110 & 0.0336 \\
+    34 & 0.0100 & 7 & 200 & 0.0118 & 0.0321 \\
+    35 & 0.0100 & 7 & 300 & 0.0121 & 0.0331 \\
+    36 & 0.0500 & 5 & 100 & 0.0096 & 0.0320 \\
+    37 & 0.0500 & 5 & 200 & 0.0090 & 0.0324 \\
+    38 & 0.0500 & 5 & 300 & 0.0101 & 0.0339 \\
+    39 & 0.0500 & 6 & 100 & 0.0119 & 0.0349 \\
+    40 & 0.0500 & 6 & 200 & 0.0126 & 0.0358 \\
+    41 & 0.0500 & 6 & 300 & 0.0125 & 0.0359 \\
+    42 & 0.0500 & 7 & 100 & 0.0134 & 0.0352 \\
+    43 & 0.0500 & 7 & 200 & 0.0153 & 0.0393 \\
+    44 & 0.0500 & 7 & 300 & 0.0119 & 0.0381 \\
+    \hline
+    \label{tab:hyperparameter_tuning}
+    \end{tabular}
+\end{center}
