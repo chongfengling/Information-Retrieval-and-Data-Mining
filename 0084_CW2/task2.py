@@ -172,7 +172,7 @@ class LogisticRegression:
 
 
 def text_preprocess(
-    data: pd.DataFrame, save_name: str = None, do_subsample: bool = True, task4=False
+    data: pd.DataFrame, save_name: str = None, do_subsample: bool = True
 ) -> pd.DataFrame:
     """from texts to vectors
 
@@ -202,8 +202,6 @@ def text_preprocess(
     sampled_query = sampled_df['queries'].progress_apply(tokenisation, remove=True)
     tqdm.pandas(desc='Tokenisation(2/2) ...')
     sampled_passage = sampled_df['passage'].progress_apply(tokenisation, remove=True)
-    if task4:
-        return pd.Series([', '.join(s1 + s2) for s1, s2 in zip(sampled_query, sampled_passage)])
     # build model
     print("Start building model ...")
     query_model = Word2Vec(

@@ -1,0 +1,10 @@
+\section{Task 2: Inverted index}
+\subsection{D3}
+We follow the method introduced in the task 1 and remove stop words in the file "passage-collection.txt" to generate our vocabulary and save it in the file "terms\_removed.txt". We inverted index of terms in the passage in the file "candidate-passages-top1000.tsv" in the following steps:
+\begin{enumerate}
+    \item Create a dict to store our information. Keys are terms in "terms\_removed.txt" and update values one by one.
+    \item Iterate each line in the file "candidate-passages-top1000.tsv". Processing the passage in the same way.
+    \item If a token in the passage also occurs in our vocabulary, get its occurrence in this passage and store occurrence with pid and qid into the previous dict.
+    \item Output a dict in the form {"term 1":[(qid1,pid1,frequency), (qid1,pid1,frequency)], "term 2": ...}.
+\end{enumerate}
+We can also return a result in a List type for creating a pd.DataFrame in the future.
