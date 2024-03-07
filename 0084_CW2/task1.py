@@ -31,8 +31,8 @@ def mAP(df: pd.DataFrame):
     # ! none of relevant passages retrieved, at this time we set the precision of this query be 0
     AP_df.replace(np.nan, 0.0, inplace=True)
     # save the result to evalation
-    df.to_csv('tmp.csv')
-    AP_df.to_csv('tmp1.csv')
+    # df.to_csv('tmp.csv')
+    # AP_df.to_csv('tmp1.csv')
     # return the mAP
     return AP_df.mean()
 
